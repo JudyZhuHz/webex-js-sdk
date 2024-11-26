@@ -5,6 +5,7 @@ import {
   ILine,
   LINE_EVENTS,
   CallingClientConfig,
+  LocalMicrophoneStream,
 } from '@webex/calling';
 import {WebexSDK} from '../types';
 import {TIMEOUT_DURATION} from '../constants';
@@ -25,20 +26,12 @@ export default class WebCallingService {
     this.line = Object.values(this.callingClient.getLines())[0];
 
     this.line.on(LINE_EVENTS.UNREGISTERED, () => {
-      this.webex.logger.log(`WxCC-SDK: Desktop un registered successfully`);
+      this.webex.logger.log(`WxCC-SDK: Desktop unregistered successfully`);
     });
 
     // Start listening for incoming calls
-    this.line.on(LINE_EVENTS.INCOMING_CALL, (callObj: ICall) => {
-      this.call = callObj;
-
-      const incomingCallEvent = new CustomEvent(LINE_EVENTS.INCOMING_CALL, {
-        detail: {
-          call: this.call,
-        },
-      });
-
-      window.dispatchEvent(incomingCallEvent);
+    this.line.on(LINE_EVENTS.INCOMING_CALL, (call: ICall) => {
+      this.call = call;
     });
 
     return new Promise<void>((resolve, reject) => {
@@ -59,5 +52,40 @@ export default class WebCallingService {
 
   public async deregisterWebCallingLine() {
     this.line?.deregister();
+  }
+
+  public answerCall(localAudioStream: LocalMicrophoneStream, taskId: string) {
+    if (this.call) {
+      this.webex.logger.info(`[WebRtc]: Call answered: ${taskId}`);
+      this.call.answer(localAudioStream);
+    } else {
+      this.webex.logger.log(`[WebRtc]: Cannot answer a non WebRtc Call: ${taskId}`);
+    }
+  }
+
+  public muteCall(localAudioStream: LocalMicrophoneStream) {
+    if (this.call) {
+      this.webex.logger.info('[WebRtc]: Call mute|unmute requesting!');
+      this.call.mute(localAudioStream);
+    } else {
+      this.webex.logger.log(`[WebRtc]: Cannot mute a non WebRtc Call`);
+    }
+  }
+
+  public isCallMuted() {
+    if (this.call) {
+      return this.call.isMuted();
+    }
+
+    return false;
+  }
+
+  public declinecall(taskId: string) {
+    if (this.call) {
+      this.webex.logger.info(`[WebRtc]: Call end requested: ${taskId}`);
+      this.call.end();
+    } else {
+      this.webex.logger.log(`[WebRtc]: Cannot mute a non WebRtc Call: ${taskId}`);
+    }
   }
 }

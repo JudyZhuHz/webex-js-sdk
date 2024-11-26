@@ -24,6 +24,7 @@ import {StateChange, Logout} from './services/agent/types';
 import {ConnectionService} from './services/core/WebSocket/connection-service';
 import {getErrorDetails} from './services/core/Utils';
 import {Profile, WelcomeEvent} from './services/config/types';
+import Task from './services/Task';
 
 export default class ContactCenter extends WebexPlugin implements IContactCenter {
   namespace = 'cc';
@@ -35,6 +36,7 @@ export default class ContactCenter extends WebexPlugin implements IContactCenter
   private webCallingService: WebCallingService;
   private connectionService: ConnectionService;
   private services: Services;
+  private task: Task;
 
   constructor(...args) {
     super(...args);
@@ -65,6 +67,7 @@ export default class ContactCenter extends WebexPlugin implements IContactCenter
       });
 
       this.webCallingService = new WebCallingService(this.$webex, this.$config.callingClientConfig);
+      this.task = new Task(this.services, this.webCallingService);
 
       LoggerProxy.initialize(this.$webex.logger);
     });
