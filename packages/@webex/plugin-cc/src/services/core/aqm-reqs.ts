@@ -1,22 +1,23 @@
 import {Msg} from './GlobalTypes';
 import * as Err from './Err';
 import {HTTP_METHODS, WebexRequestPayload} from '../../types';
-import {WebSocketManager} from './WebSocket/WebSocketManager';
 import HttpRequest from './HttpRequest';
 import LoggerProxy from '../../logger-proxy';
 import {CbRes, Conf, ConfEmpty, Pending, Req, Res, ResEmpty} from './types';
 import {TIMEOUT_REQ} from './constants';
+import {AQM_REQS_FILE} from '../../constants';
+import {WebSocketManager} from './WebSocket/WebSocketManager';
 
 export default class AqmReqs {
   private pendingRequests: Record<string, Pending> = {};
   private pendingNotifCancelrequest: Record<string, Pending> = {};
-  private webSocketManager: WebSocketManager;
   private httpRequest: HttpRequest;
+  private webSocketManager: WebSocketManager;
 
   constructor(webSocketManager: WebSocketManager) {
     this.httpRequest = HttpRequest.getInstance();
     this.webSocketManager = webSocketManager;
-    this.webSocketManager.addEventListener('message', this.onMessage);
+    this.webSocketManager.on('message', this.onMessage.bind(this));
   }
 
   req<TRes, TErr, TReq>(c: Conf<TRes, TErr, TReq>): Res<TRes, TReq> {
@@ -94,9 +95,15 @@ export default class AqmReqs {
             clear();
             const notifFail = c.notifFail!;
             if ('errId' in notifFail) {
-              LoggerProxy.logger.log(`Routing request failed: ${msg}`);
+              LoggerProxy.log(`Routing request failed: ${msg}`, {
+                module: AQM_REQS_FILE,
+                method: this.createPromise.name,
+              });
               const eerr = new Err.Details(notifFail.errId, msg as any);
-              LoggerProxy.logger.log(`Routing request failed: ${eerr}`);
+              LoggerProxy.log(`Routing request failed: ${eerr}`, {
+                module: AQM_REQS_FILE,
+                method: this.createPromise.name,
+              });
               reject(eerr);
             } else {
               reject(notifFail.err(msg as any));
@@ -147,7 +154,10 @@ export default class AqmReqs {
             if (response?.headers) {
               response.headers.Authorization = '*';
             }
-            LoggerProxy.logger.error(`Routing request timeout${keySuccess}${response!}${c.url}`);
+            LoggerProxy.error(`Routing request timeout${keySuccess}${response!}${c.url}`, {
+              module: AQM_REQS_FILE,
+              method: this.createPromise.name,
+            });
             reject(
               new Err.Details('Service.aqm.reqs.Timeout', {
                 key: keySuccess,
@@ -203,17 +213,30 @@ export default class AqmReqs {
 
   // must be lambda
   private readonly onMessage = (msg: any) => {
-    const event = JSON.parse(msg.detail);
+    const event = JSON.parse(msg);
     if (event.type === 'Welcome') {
-      LoggerProxy.logger.info(`Welcome message from Notifs Websocket`);
+      LoggerProxy.info(`Welcome message from Notifs Websocket`, {
+        module: AQM_REQS_FILE,
+        method: this.onMessage.name,
+      });
 
       return;
     }
 
     if (event.keepalive === 'true') {
-      LoggerProxy.logger.info(`Keepalive from web socket`);
+      LoggerProxy.info(`Keepalive from web socket`, {
+        module: AQM_REQS_FILE,
+        method: this.onMessage.name,
+      });
 
       return;
+    }
+
+    if (event.type === 'AgentReloginFailed') {
+      LoggerProxy.info('Silently handling the agent relogin fail', {
+        module: AQM_REQS_FILE,
+        method: this.onMessage.name,
+      });
     }
 
     let isHandled = false;
@@ -240,9 +263,10 @@ export default class AqmReqs {
     // TODO:  add event emitter for unhandled events to replicate event.listen or .on
 
     if (!isHandled) {
-      LoggerProxy.logger.info(
-        `event=missingEventHandler | [AqmReqs] missing routing message handler`
-      );
+      LoggerProxy.info(`event=missingEventHandler | [AqmReqs] missing routing message handler`, {
+        module: AQM_REQS_FILE,
+        method: this.onMessage.name,
+      });
     }
   };
 }

@@ -9,10 +9,12 @@ import {
 import ContactCenter from '../../../src/cc';
 import MockWebex from '@webex/test-helper-mock-webex';
 import {StationLoginSuccess} from '../../../src/services/agent/types';
+import {SetStateResponse} from '../../../src/types';
 import {AGENT, WEB_RTC_PREFIX} from '../../../src/services/constants';
 import Services from '../../../src/services';
 import config from '../../../src/config';
 import LoggerProxy from '../../../src/logger-proxy';
+import {CC_FILE} from '../../../src/constants';
 
 // Mock the Worker API
 import '../../../__mocks__/workerMock';
@@ -21,10 +23,9 @@ import {Profile} from '../../../src/services/config/types';
 jest.mock('../../../src/logger-proxy', () => ({
   __esModule: true,
   default: {
-    logger: {
-      log: jest.fn(),
-      error: jest.fn(),
-    },
+    log: jest.fn(),
+    error: jest.fn(),
+    info: jest.fn(),
     initialize: jest.fn(),
   },
 }));
@@ -40,6 +41,7 @@ global.URL.createObjectURL = jest.fn(() => 'blob:http://localhost:3000/12345');
 describe('webex.cc', () => {
   let webex;
   let mockWebSocketManager;
+  let mockAgentConfig;
 
   beforeEach(() => {
     webex = MockWebex({
@@ -49,6 +51,7 @@ describe('webex.cc', () => {
       logger: {
         log: jest.fn(),
         error: jest.fn(),
+        info: jest.fn(),
       },
       credentials: {
         getOrgId: jest.fn(() => 'mockOrgId'),
@@ -63,7 +66,6 @@ describe('webex.cc', () => {
     mockWebSocketManager = {
       initWebSocket: jest.fn(),
     };
-    webex.cc.webSocketManager = mockWebSocketManager;
 
     // Mock Services instance
     const mockServicesInstance = {
@@ -76,6 +78,10 @@ describe('webex.cc', () => {
       },
       config: {
         getAgentConfig: jest.fn(),
+      },
+      webSocketManager: mockWebSocketManager,
+      connectionService: {
+        on: jest.fn(),
       },
     };
     (Services.getInstance as jest.Mock).mockReturnValue(mockServicesInstance);
@@ -173,6 +179,12 @@ describe('webex.cc', () => {
         lostConnectionRecoveryTimeout: 0,
       };
       const connectWebsocketSpy = jest.spyOn(webex.cc, 'connectWebsocket');
+      const reloadSpy = jest.spyOn(webex.cc.services.agent, 'reload').mockResolvedValue({
+        data: {
+          auxCodeId: 'auxCodeId',
+          agentId: 'agentId',
+        },
+      });
       const configSpy = jest
         .spyOn(webex.cc.services.config, 'getAgentConfig')
         .mockResolvedValue(mockAgentProfile);
@@ -192,13 +204,15 @@ describe('webex.cc', () => {
         },
       });
       expect(configSpy).toHaveBeenCalled();
-      expect(webex.logger.log).toHaveBeenCalledWith(
-        'file: cc: agent config is fetched successfully'
-      );
+      expect(LoggerProxy.log).toHaveBeenCalledWith('agent config is fetched successfully', {
+        module: CC_FILE,
+        method: 'mockConstructor',
+      });
+      expect(reloadSpy).toHaveBeenCalled();
       expect(result).toEqual(mockAgentProfile);
     });
 
-    it('should register successfully when config is undefined and return agent profile', async () => {
+    it('should not register when config is undefined', async () => {
       webex.cc.$config = undefined;
       const mockAgentProfile: Profile = {
         agentId: 'agent123',
@@ -251,6 +265,12 @@ describe('webex.cc', () => {
         lostConnectionRecoveryTimeout: 0,
       };
       const connectWebsocketSpy = jest.spyOn(webex.cc, 'connectWebsocket');
+      const reloadSpy = jest.spyOn(webex.cc.services.agent, 'reload').mockResolvedValue({
+        data: {
+          auxCodeId: 'auxCodeId',
+          agentId: 'agentId',
+        },
+      });
 
       const configSpy = jest
         .spyOn(webex.cc.services.config, 'getAgentConfig')
@@ -272,9 +292,11 @@ describe('webex.cc', () => {
         },
       });
       expect(configSpy).toHaveBeenCalled();
-      expect(webex.logger.log).toHaveBeenCalledWith(
-        'file: cc: agent config is fetched successfully'
+      expect(LoggerProxy.log).toHaveBeenCalledWith(
+        'agent config is fetched successfully',
+        {module: CC_FILE, method: 'mockConstructor'}
       );
+      expect(reloadSpy).not.toHaveBeenCalled();
       expect(result).toEqual(mockAgentProfile);
     });
 
@@ -284,9 +306,10 @@ describe('webex.cc', () => {
 
       await expect(webex.cc.register()).rejects.toThrow('Error while performing register');
 
-      expect(webex.logger.error).toHaveBeenCalledWith(
-        `file: cc: Error during register: ${mockError}`
-      );
+      expect(LoggerProxy.error).toHaveBeenCalledWith(`Error during register: ${mockError}`, {
+        module: CC_FILE,
+        method: 'register',
+      });
     });
   });
 
@@ -379,8 +402,9 @@ describe('webex.cc', () => {
 
       await expect(webex.cc.stationLogin(options)).rejects.toThrow(error.details.data.reason);
 
-      expect(LoggerProxy.logger.error).toHaveBeenCalledWith(
-        `stationLogin failed with trackingId: ${error.details.trackingId}`
+      expect(LoggerProxy.error).toHaveBeenCalledWith(
+        `stationLogin failed with trackingId: ${error.details.trackingId}`,
+        {module: CC_FILE, method: 'stationLogin'}
       );
     });
   });
@@ -415,8 +439,9 @@ describe('webex.cc', () => {
 
       await expect(webex.cc.stationLogout(data)).rejects.toThrow(error.details.data.reason);
 
-      expect(LoggerProxy.logger.error).toHaveBeenCalledWith(
-        `stationLogout failed with trackingId: ${error.details.trackingId}`
+      expect(LoggerProxy.error).toHaveBeenCalledWith(
+        `stationLogout failed with trackingId: ${error.details.trackingId}`,
+        {module: CC_FILE, method: 'stationLogout'}
       );
     });
   });
@@ -449,8 +474,9 @@ describe('webex.cc', () => {
 
       await expect(webex.cc.stationReLogin()).rejects.toThrow(error.details.data.reason);
 
-      expect(LoggerProxy.logger.error).toHaveBeenCalledWith(
-        `stationReLogin failed with trackingId: ${error.details.trackingId}`
+      expect(LoggerProxy.error).toHaveBeenCalledWith(
+        `stationReLogin failed with trackingId: ${error.details.trackingId}`,
+        {module: CC_FILE, method: 'stationReLogin'}
       );
     });
   });
@@ -472,7 +498,10 @@ describe('webex.cc', () => {
 
       expect(setAgentStatusMock).toHaveBeenCalledWith({data: expectedPayload});
       expect(result).toEqual(expectedPayload);
-      expect(webex.logger.log).toHaveBeenCalledWith('file: cc: SET AGENT STATUS API SUCCESS');
+      expect(LoggerProxy.log).toHaveBeenCalledWith('SET AGENT STATUS API SUCCESS', {
+        module: CC_FILE,
+        method: 'setAgentState',
+      });
     });
 
     it('should set agent status successfully when status is Meeting', async () => {
@@ -491,7 +520,10 @@ describe('webex.cc', () => {
 
       expect(setAgentStatusMock).toHaveBeenCalledWith({data: expectedPayload});
       expect(result).toEqual(expectedPayload);
-      expect(webex.logger.log).toHaveBeenCalledWith('file: cc: SET AGENT STATUS API SUCCESS');
+      expect(LoggerProxy.log).toHaveBeenCalledWith('SET AGENT STATUS API SUCCESS', {
+        module: CC_FILE,
+        method: 'setAgentState',
+      });
     });
 
     it('should handle error during setAgentStatus when status is Meeting', async () => {
@@ -515,8 +547,9 @@ describe('webex.cc', () => {
       await expect(webex.cc.setAgentState(expectedPayload)).rejects.toThrow(
         error.details.data.reason
       );
-      expect(LoggerProxy.logger.error).toHaveBeenCalledWith(
-        `setAgentState failed with trackingId: ${error.details.trackingId}`
+      expect(LoggerProxy.error).toHaveBeenCalledWith(
+        `setAgentState failed with trackingId: ${error.details.trackingId}`,
+        {module: CC_FILE, method: 'setAgentState'}
       );
     });
 
@@ -540,8 +573,9 @@ describe('webex.cc', () => {
       await expect(webex.cc.setAgentState(invalidPayload)).rejects.toThrow(
         error.details.data.reason
       );
-      expect(LoggerProxy.logger.error).toHaveBeenCalledWith(
-        `setAgentState failed with trackingId: ${error.details.trackingId}`
+      expect(LoggerProxy.error).toHaveBeenCalledWith(
+        `setAgentState failed with trackingId: ${error.details.trackingId}`,
+        {module: CC_FILE, method: 'setAgentState'}
       );
     });
   });
@@ -619,8 +653,65 @@ describe('webex.cc', () => {
       jest.spyOn(webex.cc.services.agent, 'buddyAgents').mockRejectedValue(error);
 
       await expect(webex.cc.getBuddyAgents(data)).rejects.toThrow(error.details.data.reason);
-      expect(LoggerProxy.logger.error).toHaveBeenCalledWith(
-        `getBuddyAgents failed with trackingId: ${error.details.trackingId}`
+      expect(LoggerProxy.error).toHaveBeenCalledWith(
+        `getBuddyAgents failed with trackingId: ${error.details.trackingId}`,
+        {module: CC_FILE, method: 'getBuddyAgents'}
+      );
+    });
+  });
+
+  describe('silentRelogin', () => {
+    it('should perform silent relogin and set agent state to available', async () => {
+      const mockReLoginResponse = {
+        data: {
+          auxCodeId: 'auxCodeId',
+          agentId: 'agentId',
+          lastStateChangeReason: 'agent-wss-disconnect',
+        },
+      };
+
+      // Mock the agentConfig
+      webex.cc.agentConfig = {
+        agentId: 'agentId',
+        agentProfileID: 'test-agent-profile-id',
+        isAgentLoggedIn: false,
+      } as Profile;
+
+      const setAgentStateSpy = jest
+        .spyOn(webex.cc, 'setAgentState')
+        .mockResolvedValue({} as SetStateResponse);
+      jest.spyOn(webex.cc.services.agent, 'reload').mockResolvedValue(mockReLoginResponse);
+
+      await webex.cc['silentRelogin']();
+
+      expect(LoggerProxy.info).toHaveBeenCalledWith(
+        'event=requestAutoStateChange | Requesting state change to available on socket reconnect',
+        {module: CC_FILE, method: 'silentRelogin'}
+      );
+      expect(setAgentStateSpy).toHaveBeenCalledWith({
+        state: 'Available',
+        auxCodeId: 'auxCodeId',
+        lastStateChangeReason: 'agent-wss-disconnect',
+        agentId: 'agentId',
+      });
+      expect(webex.cc.agentConfig.isAgentLoggedIn).toBe(true);
+    });
+
+    it('should handle AGENT_NOT_FOUND error silently', async () => {
+      const error = {
+        details: {
+          trackingId: '1234',
+          data: {
+            reason: 'AGENT_NOT_FOUND',
+          },
+        },
+      };
+
+      jest.spyOn(webex.cc.services.agent, 'reload').mockRejectedValue(error);
+      await webex.cc['silentRelogin']();
+      expect(LoggerProxy.info).toHaveBeenCalledWith(
+        'Agent not found during re-login, handling silently',
+        {module: CC_FILE, method: 'silentRelogin'}
       );
     });
   });

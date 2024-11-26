@@ -10,11 +10,18 @@ const getCommonErrorDetails = (errObj: WebexRequestPayload) => {
   };
 };
 
-export const getErrorDetails = (error: any, methodName: string) => {
+export const getErrorDetails = (error: any, methodName: string, moduleName: string) => {
   const failure = error.details as Failure;
-  LoggerProxy.logger.error(`${methodName} failed with trackingId: ${failure?.trackingId}`);
+  const reason = failure?.data?.reason ?? `Error while performing ${methodName}`;
+  LoggerProxy.error(`${methodName} failed with trackingId: ${failure?.trackingId}`, {
+    module: moduleName,
+    method: methodName,
+  });
 
-  return new Error(failure?.data?.reason ?? `Error while performing ${methodName}`);
+  return {
+    error: new Error(reason ?? `Error while performing ${methodName}`),
+    reason,
+  };
 };
 
 export const createErrDetailsObject = (errObj: WebexRequestPayload) => {

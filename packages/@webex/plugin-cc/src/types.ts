@@ -44,6 +44,7 @@ type ServiceHost = {
 
 export interface CCPluginConfig {
   allowMultiLogin: boolean;
+  allowAutomatedRelogin: boolean;
   clientType: string;
   isKeepAliveEnabled: boolean;
   force: boolean;
@@ -58,6 +59,9 @@ export interface CCPluginConfig {
   callingClientConfig: CallingClientConfig;
 }
 
+/**
+ * Logging related types
+ */
 export type Logger = {
   log: (payload: string) => void;
   error: (payload: string) => void;
@@ -66,6 +70,19 @@ export type Logger = {
   trace: (payload: string) => void;
   debug: (payload: string) => void;
 };
+
+export interface LogContext {
+  module?: string;
+  method?: string;
+}
+
+export enum LOGGING_LEVEL {
+  error = 'ERROR',
+  warn = 'WARN',
+  log = 'LOG',
+  info = 'INFO',
+  trace = 'TRACE',
+}
 
 export interface WebexSDK {
   version: string;
