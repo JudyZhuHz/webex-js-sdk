@@ -245,7 +245,7 @@ export type ConsultTransferPayLoad = {
   destinationType: DestinationType;
 };
 
-export type ConsultData = {
+export type ConsultPayload = {
   to: string | undefined;
   destinationType: string;
   holdParticipants?: boolean;

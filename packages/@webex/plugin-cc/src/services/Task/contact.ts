@@ -5,6 +5,7 @@ import AqmReqs from '../core/aqm-reqs';
 import {TIMEOUT_REQ} from '../core/constants';
 import {
   CONSULT,
+  CONSULT_TRANSFER,
   HOLD,
   PAUSE,
   TASK_API,
@@ -142,7 +143,7 @@ export default function routingContact(aqm: AqmReqs) {
     /*
      * Consult contact
      */
-    consult: this.aqm.req((p: {interactionId: string; data: Contact.ConsultData; url: string}) => ({
+    consult: aqm.req((p: {interactionId: string; data: Contact.ConsultPayload}) => ({
       url: `${TASK_API}${p.interactionId}${CONSULT}`,
       data: p.data,
       timeout:
@@ -166,7 +167,7 @@ export default function routingContact(aqm: AqmReqs) {
                 : CC_EVENTS.AGENT_CONSULT_FAILED,
           },
         },
-        errId: 'Service.aqm.contact.consult',
+        errId: 'Service.aqm.task.consult',
       },
       notifCancel: {
         bind: {
@@ -252,34 +253,36 @@ export default function routingContact(aqm: AqmReqs) {
     /*
      * Consult Transfer contact
      */
-    // consultTransfer: aqm.req((p: {interactionId: string; data: Contact.ConsultTransferPayLoad}) => ({
-    //   url: `${TASK_API}${p.interactionId}${CONSULT_TRANSFER}`,
-    //   data: p.data,
-    //   host: WCC_API_GATEWAY,
-    //   err,
-    //   notifSuccess: {
-    //     bind: {
-    //       type: TASK_MESSAGE_TYPE,
-    //       data: {
-    //         type: [CC_EVENTS.AGENT_CONSULT_TRANSFERRED, CC_EVENTS.AGENT_CONSULT_TRANSFERRING],
-    //         interactionId: p.interactionId
-    //       }
-    //     },
-    //     msg: {} as Contact.AgentContact
-    //   },
-    //   notifFail: {
-    //     bind: {
-    //       type: TASK_MESSAGE_TYPE,
-    //       data: {type: CC_EVENTS.AGENT_CONSULT_TRANSFER_FAILED}
-    //     },
-    //     errId: 'Service.aqm.contact.AgentConsultTransferFailed'
-    //   }
-    // })),
+    consultTransfer: aqm.req(
+      (p: {interactionId: string; data: Contact.ConsultTransferPayLoad}) => ({
+        url: `${TASK_API}${p.interactionId}${CONSULT_TRANSFER}`,
+        data: p.data,
+        host: WCC_API_GATEWAY,
+        err,
+        notifSuccess: {
+          bind: {
+            type: TASK_MESSAGE_TYPE,
+            data: {
+              type: [CC_EVENTS.AGENT_CONSULT_TRANSFERRED, CC_EVENTS.AGENT_CONSULT_TRANSFERRING],
+              interactionId: p.interactionId,
+            },
+          },
+          msg: {} as Contact.AgentContact,
+        },
+        notifFail: {
+          bind: {
+            type: TASK_MESSAGE_TYPE,
+            data: {type: CC_EVENTS.AGENT_CONSULT_TRANSFER_FAILED},
+          },
+          errId: 'Service.aqm.task.AgentConsultTransferFailed',
+        },
+      })
+    ),
 
     /*
      * End contact
      */
-    end: this.aqm.req((p: {interactionId: string}) => ({
+    end: aqm.req((p: {interactionId: string}) => ({
       url: `${TASK_API}${p.interactionId}/end`,
       data: {},
       err,
@@ -325,7 +328,7 @@ export default function routingContact(aqm: AqmReqs) {
     /*
      * Cancel popover
      */
-    cancelTask: this.aqm.req((p: {interactionId: string}) => ({
+    cancelTask: aqm.req((p: {interactionId: string}) => ({
       url: `${TASK_API}${p.interactionId}/end`,
       data: {},
       err,

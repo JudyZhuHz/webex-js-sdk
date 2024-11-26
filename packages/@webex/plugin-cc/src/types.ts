@@ -221,6 +221,7 @@ export type RequestBody =
   | Agent.BuddyAgents
   | Contact.HoldResumePayload
   | Contact.ResumeRecordingPayload
+  | Contact.ConsultPayload
   | Contact.TransferPayLoad
   | Contact.ConsultTransferPayLoad
   | Contact.cancelCtq
