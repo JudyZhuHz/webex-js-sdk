@@ -34,6 +34,10 @@ const idleCodesDropdown = document.querySelector('#idleCodesDropdown')
 const setAgentStatusButton = document.querySelector('#setAgentStatus');
 const logoutAgentElm = document.querySelector('#logoutAgent');
 const buddyAgentsDropdownElm = document.getElementById('buddyAgentsDropdown');
+const callListener = document.querySelector('#incomingsection');
+const incomingDetailsElm = document.querySelector('#incoming-call');
+const answerElm = document.querySelector('#answer');
+const declineElm = document.querySelector('#decline');
 
 // Store and Grab `access-token` from sessionStorage
 if (sessionStorage.getItem('date') > new Date().getTime()) {
@@ -243,6 +247,31 @@ async function fetchBuddyAgents() {
     buddyAgentsDropdownElm.innerHTML = ''; // Clear previous options
     buddyAgentsDropdownElm.innerHTML = `<option disabled="true">Failed to fetch buddy agents, ${error}<option>`;
   }
+}
+const callNotifyEvent = new CustomEvent('task:incoming', {
+  detail: {
+    call: call,
+  },
+});
+
+webex.cc.task.on('task:incoming', (call) => {
+  callNotifyEvent.detail.call = call;
+  
+  callListener.dispatchEvent(callNotifyEvent);
+})
+
+callListener.addEventListener('task:incoming', (event) => {
+  console.log('Received incoming webRTC call');
+  answerElm.disabled = false;
+  const callerDisplay = event.detail.call.getCallerInfo();
+
+  incomingDetailsElm.innerText = `Call from ${callerDisplay.name}, Ph: ${callerDisplay.num}`;
+  console.log(`Call from :${callerDisplay.name}:${callerDisplay.num}`);
+});
+
+function answer() {
+  answerElm.disabled = true;
+  webex.cc.task.accept(taskId);
 }
 
 const allCollapsibleElements = document.querySelectorAll('.collapsible');

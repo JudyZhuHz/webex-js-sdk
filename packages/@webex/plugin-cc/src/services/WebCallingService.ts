@@ -1,3 +1,4 @@
+import EventEmitter from 'events';
 import {
   createClient,
   ICall,
@@ -11,13 +12,14 @@ import {WebexSDK} from '../types';
 import {TIMEOUT_DURATION, WEB_CALLING_SERVICE_FILE} from '../constants';
 import LoggerProxy from '../logger-proxy';
 
-export default class WebCallingService {
+export default class WebCallingService extends EventEmitter {
   private callingClient: ICallingClient;
   private callingClientConfig: CallingClientConfig;
   private line: ILine;
   private call: ICall;
   private webex: WebexSDK;
   constructor(webex: WebexSDK, callingClientConfig: CallingClientConfig) {
+    super();
     this.webex = webex;
     this.callingClientConfig = callingClientConfig;
   }
@@ -36,6 +38,7 @@ export default class WebCallingService {
     // Start listening for incoming calls
     this.line.on(LINE_EVENTS.INCOMING_CALL, (call: ICall) => {
       this.call = call;
+      this.emit(LINE_EVENTS.INCOMING_CALL, call);
     });
 
     return new Promise<void>((resolve, reject) => {

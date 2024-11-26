@@ -1,9 +1,10 @@
 import {CC_EVENTS} from '../config/types';
+import {createErrDetailsObject as err} from '../core/Utils';
 import {WCC_API_GATEWAY} from '../constants';
 import AqmReqs from '../core/aqm-reqs';
 import {TIMEOUT_REQ} from '../core/constants';
 import {
-  CONSULT_TRANSFER,
+  CONSULT,
   HOLD,
   PAUSE,
   TASK_API,
@@ -142,7 +143,7 @@ export default function routingContact(aqm: AqmReqs) {
      * Consult contact
      */
     consult: this.aqm.req((p: {interactionId: string; data: Contact.ConsultData; url: string}) => ({
-      url: `${TASK_API}${p.interactionId}/consult`,
+      url: `${TASK_API}${p.interactionId}${CONSULT}`,
       data: p.data,
       timeout:
         p.data && p.data.destinationType === DESTINATION_TYPE.QUEUE ? 'disabled' : TIMEOUT_REQ,
@@ -251,31 +252,29 @@ export default function routingContact(aqm: AqmReqs) {
     /*
      * Consult Transfer contact
      */
-    consultTransfer: aqm.req(
-      (p: {interactionId: string; data: Contact.ConsultTransferPayLoad}) => ({
-        url: `${TASK_API}${p.interactionId}${CONSULT_TRANSFER}`,
-        data: p.data,
-        host: WCC_API_GATEWAY,
-        err,
-        notifSuccess: {
-          bind: {
-            type: TASK_MESSAGE_TYPE,
-            data: {
-              type: [CC_EVENTS.AGENT_CONSULT_TRANSFERRED, CC_EVENTS.AGENT_CONSULT_TRANSFERRING],
-              interactionId: p.interactionId,
-            },
-          },
-          msg: {} as Contact.AgentContact,
-        },
-        notifFail: {
-          bind: {
-            type: TASK_MESSAGE_TYPE,
-            data: {type: CC_EVENTS.AGENT_CONSULT_TRANSFER_FAILED},
-          },
-          errId: 'Service.aqm.contact.AgentConsultTransferFailed',
-        },
-      })
-    ),
+    // consultTransfer: aqm.req((p: {interactionId: string; data: Contact.ConsultTransferPayLoad}) => ({
+    //   url: `${TASK_API}${p.interactionId}${CONSULT_TRANSFER}`,
+    //   data: p.data,
+    //   host: WCC_API_GATEWAY,
+    //   err,
+    //   notifSuccess: {
+    //     bind: {
+    //       type: TASK_MESSAGE_TYPE,
+    //       data: {
+    //         type: [CC_EVENTS.AGENT_CONSULT_TRANSFERRED, CC_EVENTS.AGENT_CONSULT_TRANSFERRING],
+    //         interactionId: p.interactionId
+    //       }
+    //     },
+    //     msg: {} as Contact.AgentContact
+    //   },
+    //   notifFail: {
+    //     bind: {
+    //       type: TASK_MESSAGE_TYPE,
+    //       data: {type: CC_EVENTS.AGENT_CONSULT_TRANSFER_FAILED}
+    //     },
+    //     errId: 'Service.aqm.contact.AgentConsultTransferFailed'
+    //   }
+    // })),
 
     /*
      * End contact
@@ -317,7 +316,7 @@ export default function routingContact(aqm: AqmReqs) {
       notifFail: {
         bind: {
           type: TASK_MESSAGE_TYPE,
-          data: {type: CC_EVENTS.AGENt_WRAPUP_FAILED},
+          data: {type: CC_EVENTS.AGENT_WRAPUP_FAILED},
         },
         errId: 'Service.aqm.task.wrapup',
       },
