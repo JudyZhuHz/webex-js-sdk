@@ -167,7 +167,7 @@ export default class ContactCenter extends WebexPlugin implements IContactCenter
       });
 
       if (data.loginOption === LoginOption.BROWSER) {
-        await this.webCallingService.registerWebCallingLine();
+        await this.webCallingService.registerWebCallingLine(data.loginOption);
       }
 
       await loginResponse;

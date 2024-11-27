@@ -1,5 +1,5 @@
 import EventEmitter from 'events';
-import {LINE_EVENTS, LocalMicrophoneStream, createMicrophoneStream} from '@webex/calling';
+import {ICall, LINE_EVENTS, LocalMicrophoneStream, createMicrophoneStream} from '@webex/calling';
 import Services from '..';
 import {getErrorDetails} from '../core/Utils';
 import WebCallingService from '../WebCallingService';
@@ -11,25 +11,42 @@ export default class Task extends EventEmitter {
   private localAudioStream: LocalMicrophoneStream;
   private services: Services; // This will be used later for invoking Contact APIs
   private webCallingService: WebCallingService;
+  private taskPayload: any;
+  private call: ICall;
 
   constructor(services: Services, webCallingService: WebCallingService) {
     super();
     this.services = services;
     this.webCallingService = webCallingService;
-    this.setupTaskListeners();
+    this.registerTaskListeners();
+    this.registerCallingEvent();
   }
 
-  private setupTaskListeners() {
+  private registerCallingEvent() {
+    this.webCallingService.on(LINE_EVENTS.INCOMING_CALL, (call) => {
+      if (this.taskPayload) {
+        this.emit('task:incoming', this.taskPayload);
+      } else {
+        this.call = call;
+      }
+    });
+  }
+
+  private registerTaskListeners() {
     // TODO: This event reception approach will be changed once state machine is implemented
-    this.services.webSocketManager.on('message', (data) => {
-      switch (data.type) {
+    this.services.webSocketManager.on('message', (event) => {
+      const payload = JSON.parse(event);
+      switch (payload.data.type) {
         case CC_EVENTS.AGENT_CONTACT_RESERVED:
-          this.webCallingService.on(LINE_EVENTS.INCOMING_CALL, (call) => {
-            this.emit('task:incoming', call);
-          });
+          this.taskPayload = payload.data;
+          if (this.webCallingService.loginOption !== LoginOption.BROWSER) {
+            this.emit('task:incoming', payload.data);
+          } else if (this.call) {
+            this.emit('task:incoming', payload.data);
+          }
           break;
         case CC_EVENTS.AGENT_CONTACT_ASSIGNED:
-          this.emit('task:assigned');
+          this.emit('task:assigned', payload.data);
           break;
         default:
           break;
@@ -43,9 +60,9 @@ export default class Task extends EventEmitter {
    * @returns Promise<TaskAcceptResponse>
    * @throws Error
    */
-  public async accept(loginOption: LoginOption, taskId: string): Promise<void> {
+  public async accept(taskId: string): Promise<void> {
     try {
-      if (loginOption === LoginOption.BROWSER) {
+      if (this.webCallingService.loginOption === LoginOption.BROWSER) {
         // @ts-ignore
         this.localAudioStream = await createMicrophoneStream({audio: true});
         this.webCallingService.answerCall(this.localAudioStream, taskId);

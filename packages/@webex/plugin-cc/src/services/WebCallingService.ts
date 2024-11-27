@@ -8,7 +8,7 @@ import {
   CallingClientConfig,
   LocalMicrophoneStream,
 } from '@webex/calling';
-import {WebexSDK} from '../types';
+import {LoginOption, WebexSDK} from '../types';
 import {TIMEOUT_DURATION, WEB_CALLING_SERVICE_FILE} from '../constants';
 import LoggerProxy from '../logger-proxy';
 
@@ -18,13 +18,15 @@ export default class WebCallingService extends EventEmitter {
   private line: ILine;
   private call: ICall;
   private webex: WebexSDK;
+  public loginOption: LoginOption;
   constructor(webex: WebexSDK, callingClientConfig: CallingClientConfig) {
     super();
     this.webex = webex;
     this.callingClientConfig = callingClientConfig;
   }
 
-  public async registerWebCallingLine(): Promise<void> {
+  public async registerWebCallingLine(loginOption: LoginOption): Promise<void> {
+    this.loginOption = loginOption;
     this.callingClient = await createClient(this.webex as any, this.callingClientConfig);
     this.line = Object.values(this.callingClient.getLines())[0];
 

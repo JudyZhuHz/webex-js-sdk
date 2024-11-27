@@ -139,8 +139,8 @@ export class WebSocketManager extends EventEmitter {
       };
 
       this.websocket.onmessage = (e: MessageEvent) => {
+        this.emit('message', e.data);
         const eventData = JSON.parse(e.data);
-        this.emit('message', eventData);
 
         if (eventData.type === CC_EVENTS.WELCOME) {
           this.isWelcomeReceived = true;

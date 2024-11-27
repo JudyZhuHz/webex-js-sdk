@@ -18,6 +18,8 @@ let deviceId;
 let agentStatusId;
 let agentStatus;
 let agentId;
+let task;
+let taskId;
 
 const authTypeElm = document.querySelector('#auth-type');
 const credentialsFormElm = document.querySelector('#credentials');
@@ -73,6 +75,12 @@ function toggleDisplay(elementId, status) {
     element.classList.add('hidden');
   }
 }
+
+const taskEvents = new CustomEvent('task:incoming', {
+  detail: {
+    task: task,
+  },
+});
 
 function generateWebexConfig({credentials}) {
   return {
@@ -160,10 +168,20 @@ function register() {
             idleCodesDropdown.add(option);
           }
         });
-
     }).catch((error) => {
         console.error('Event subscription failed', error);
     })
+
+    webex.cc.task.on('task:incoming', (task) => {
+      task = task;
+      taskEvents.detail.task = task;
+      
+      callListener.dispatchEvent(taskEvents);
+    })    
+
+    webex.cc.task.on('task:assigned', (task) => {
+    
+    }) 
 }
 
 async function handleAgentLogin(e) {
@@ -248,30 +266,25 @@ async function fetchBuddyAgents() {
     buddyAgentsDropdownElm.innerHTML = `<option disabled="true">Failed to fetch buddy agents, ${error}<option>`;
   }
 }
-const callNotifyEvent = new CustomEvent('task:incoming', {
-  detail: {
-    call: call,
-  },
-});
-
-webex.cc.task.on('task:incoming', (call) => {
-  callNotifyEvent.detail.call = call;
-  
-  callListener.dispatchEvent(callNotifyEvent);
-})
 
 callListener.addEventListener('task:incoming', (event) => {
-  console.log('Received incoming webRTC call');
   answerElm.disabled = false;
-  const callerDisplay = event.detail.call.getCallerInfo();
+  declineElm.disabled = false;
+  taskId = event.detail.task.interactionId;
+  const callerDisplay = event.detail.task.interaction.callAssociatedDetails.ani;
 
-  incomingDetailsElm.innerText = `Call from ${callerDisplay.name}, Ph: ${callerDisplay.num}`;
-  console.log(`Call from :${callerDisplay.name}:${callerDisplay.num}`);
+  incomingDetailsElm.innerText = `Call from ${callerDisplay}`;
 });
 
 function answer() {
   answerElm.disabled = true;
   webex.cc.task.accept(taskId);
+}
+
+function decline() {
+  answerElm.disabled = true;
+  declineElm.disabled = true;
+  webex.cc.task.decline(taskId);
 }
 
 const allCollapsibleElements = document.querySelectorAll('.collapsible');
