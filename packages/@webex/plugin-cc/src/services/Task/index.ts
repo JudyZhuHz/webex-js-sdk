@@ -60,7 +60,7 @@ export default class Task extends EventEmitter {
    * @returns Promise<void>
    * @throws Error
    */
-  public async accept(taskId: string): Promise<void> {
+  public async accept(taskId: string) {
     try {
       if (this.webCallingService.loginOption === LoginOption.BROWSER) {
         // @ts-ignore
@@ -81,7 +81,7 @@ export default class Task extends EventEmitter {
    * @returns Promise<void>
    * @throws Error
    */
-  public async decline(taskId: string): Promise<void> {
+  public async decline(taskId: string) {
     try {
       this.webCallingService.declinecall(taskId);
     } catch (error) {

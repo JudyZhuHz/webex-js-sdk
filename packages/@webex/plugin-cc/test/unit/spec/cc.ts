@@ -42,7 +42,6 @@ global.URL.createObjectURL = jest.fn(() => 'blob:http://localhost:3000/12345');
 describe('webex.cc', () => {
   let webex;
   let mockWebSocketManager;
-  let mockAgentConfig;
 
   beforeEach(() => {
     webex = MockWebex({
