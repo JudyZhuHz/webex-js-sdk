@@ -110,9 +110,8 @@
                     <option value="" selected hidden>Choose Agent Login ...</option>
                   </select>
                   <input id="dialNumber" name="dialNumber" placeholder="Dial Number" value="" type="text">
-                  <button id="loginAgent" disabled class="btn btn-primary my-3" onclick="doAgentLogin()">Login With
-                    Selected Team</button>
-                  <button id="logoutAgent" class="btn btn-primary my-3 ml-2 hidden" onclick="logoutAgent()">Logout Agent</button>
+                  <button id="loginAgent" disabled class="btn btn-primary my-3" onclick="doAgentLogin()">Login</button>
+                  <button id="logoutAgent" class="btn btn-primary my-3 ml-2 hidden" onclick="logoutAgent()">Logout</button>
                 </fieldset>
                 <fieldset>
                   <legend>Agent status</legend>
@@ -142,6 +141,15 @@
             </div>
           </fieldset>
         </div>
+          <!-- Agent Call Controls -->
+          <div id="callcontrolsection">
+            <fieldset>
+              <legend>Call Controls</legend>
+              <div class="u-mv">
+                <!-- Add the call control buttons here -->
+              </div>
+            </fieldset>
+          </div>
       </section>
     </div>
   </div>

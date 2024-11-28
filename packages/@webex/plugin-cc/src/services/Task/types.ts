@@ -138,7 +138,6 @@ export type Interaction = {
   orgId: string;
   createdTimestamp?: number;
   isWrapUpAssist?: boolean;
-
   callProcessingDetails: {
     QMgrName: string;
     taskToBeSelfServiced: string;

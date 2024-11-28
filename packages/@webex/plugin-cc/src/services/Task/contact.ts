@@ -6,6 +6,7 @@ import {TIMEOUT_REQ} from '../core/constants';
 import {
   CONSULT,
   CONSULT_TRANSFER,
+  END,
   HOLD,
   PAUSE,
   TASK_API,
@@ -237,14 +238,14 @@ export default function routingContact(aqm: AqmReqs) {
       notifSuccess: {
         bind: {
           type: TASK_MESSAGE_TYPE,
-          data: {type: 'AgentVteamTransferred', interactionId: p.interactionId},
+          data: {type: CC_EVENTS.AGENT_VTEAM_TRANSFERRED, interactionId: p.interactionId},
         },
         msg: {} as Contact.AgentContact,
       },
       notifFail: {
         bind: {
           type: TASK_MESSAGE_TYPE,
-          data: {type: 'AgentVteamTransferFailed'},
+          data: {type: CC_EVENTS.AGENT_VTEAM_TRANSFER_FAILED},
         },
         errId: 'Service.aqm.task.AgentVteamTransferFailed',
       },
@@ -283,7 +284,7 @@ export default function routingContact(aqm: AqmReqs) {
      * End contact
      */
     end: aqm.req((p: {interactionId: string}) => ({
-      url: `${TASK_API}${p.interactionId}/end`,
+      url: `${TASK_API}${p.interactionId}${END}`,
       data: {},
       err,
       notifSuccess: {
@@ -329,7 +330,7 @@ export default function routingContact(aqm: AqmReqs) {
      * Cancel popover
      */
     cancelTask: aqm.req((p: {interactionId: string}) => ({
-      url: `${TASK_API}${p.interactionId}/end`,
+      url: `${TASK_API}${p.interactionId}${END}`,
       data: {},
       err,
       notifSuccess: {

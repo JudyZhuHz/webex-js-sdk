@@ -29,17 +29,18 @@ const authStatusElm = document.querySelector('#access-token-status');
 const registerBtn = document.querySelector('#webexcc-register');
 const teamsDropdown = document.querySelector('#teamsDropdown');
 const agentLogin = document.querySelector('#AgentLogin');
-const agentLoginButton = document.querySelector('#loginAgent');
+const loginAgentElm = document.querySelector('#loginAgent');
 const dialNumber = document.querySelector('#dialNumber');
 const registerStatus = document.querySelector('#ws-connection-status');
 const idleCodesDropdown = document.querySelector('#idleCodesDropdown')
 const setAgentStatusButton = document.querySelector('#setAgentStatus');
 const logoutAgentElm = document.querySelector('#logoutAgent');
 const buddyAgentsDropdownElm = document.getElementById('buddyAgentsDropdown');
-const callListener = document.querySelector('#incomingsection');
+const incomingCallListener = document.querySelector('#incomingsection');
 const incomingDetailsElm = document.querySelector('#incoming-call');
 const answerElm = document.querySelector('#answer');
 const declineElm = document.querySelector('#decline');
+const callControlListener = document.querySelector('#callcontrolsection');
 
 // Store and Grab `access-token` from sessionStorage
 if (sessionStorage.getItem('date') > new Date().getTime()) {
@@ -81,6 +82,20 @@ const taskEvents = new CustomEvent('task:incoming', {
     task: task,
   },
 });
+
+function registerListeners(task) {
+  task.on('task:incoming', (task) => {
+    task = task;
+    taskEvents.detail.task = task;
+    
+    incomingCallListener.dispatchEvent(taskEvents);
+  })    
+
+  task.on('task:assigned', (task) => {
+    console.log('Call has been accepted');
+    // TODO: Activate the call control buttons once the call is accepted
+  }) 
+}
 
 function generateWebexConfig({credentials}) {
   return {
@@ -144,7 +159,7 @@ function register() {
         agentLogin.innerHTML = '<option value="" selected>Choose Agent Login ...</option>'; // Clear previously selected option on agentLogin.
         dialNumber.value = '';
         dialNumber.disabled = true;
-        if(loginVoiceOptions.length > 0) agentLoginButton.disabled = false;
+        if(loginVoiceOptions.length > 0) loginAgentElm.disabled = false;
         loginVoiceOptions.forEach((voiceOptions)=> {
           const option = document.createElement('option');
           option.text = voiceOptions;
@@ -172,16 +187,8 @@ function register() {
         console.error('Event subscription failed', error);
     })
 
-    webex.cc.task.on('task:incoming', (task) => {
-      task = task;
-      taskEvents.detail.task = task;
-      
-      callListener.dispatchEvent(taskEvents);
-    })    
-
-    webex.cc.task.on('task:assigned', (task) => {
-    
-    }) 
+    task = webex.cc.task;
+    registerListeners(task);
 }
 
 async function handleAgentLogin(e) {
@@ -199,6 +206,7 @@ async function handleAgentLogin(e) {
 function doAgentLogin() {
   webex.cc.stationLogin({teamId: teamsDropdown.value, loginOption: agentDeviceType, dialNumber: dialNumber.value}).then((response) => {
     console.log('Agent Logged in successfully', response);
+    loginAgentElm.disabled = true;
     logoutAgentElm.classList.remove('hidden');
   }
   ).catch((error) => {
@@ -226,6 +234,7 @@ function setAgentStatus() {
 function logoutAgent() {
   webex.cc.stationLogout({logoutReason: 'logout'}).then((response) => {
     console.log('Agent logged out successfully', response);
+    loginAgentElm.disabled = false;
 
     setTimeout(() => {
       logoutAgentElm.classList.add('hidden');
@@ -267,9 +276,11 @@ async function fetchBuddyAgents() {
   }
 }
 
-callListener.addEventListener('task:incoming', (event) => {
-  answerElm.disabled = false;
-  declineElm.disabled = false;
+incomingCallListener.addEventListener('task:incoming', (event) => {
+  if (task.webCallingService.loginOption === 'BROWSER') {
+    answerElm.disabled = false;
+    declineElm.disabled = false;
+  }
   taskId = event.detail.task.interactionId;
   const callerDisplay = event.detail.task.interaction.callAssociatedDetails.ani;
 
@@ -278,13 +289,16 @@ callListener.addEventListener('task:incoming', (event) => {
 
 function answer() {
   answerElm.disabled = true;
+  declineElm.disabled = true;
   webex.cc.task.accept(taskId);
+  incomingDetailsElm.innerText = 'Call Accepted';
 }
 
 function decline() {
   answerElm.disabled = true;
   declineElm.disabled = true;
   webex.cc.task.decline(taskId);
+  incomingDetailsElm.innerText = 'No incoming calls';
 }
 
 const allCollapsibleElements = document.querySelectorAll('.collapsible');
