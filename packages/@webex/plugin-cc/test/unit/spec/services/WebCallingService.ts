@@ -8,7 +8,7 @@ import {
   ICall,
   CallingClientConfig,
 } from '@webex/calling';
-import {WebexSDK} from '../../../../src/types';
+import {LoginOption, WebexSDK} from '../../../../src/types';
 import config from '../../../../src/config';
 import LoggerProxy from '../../../../src/logger-proxy';
 import {WEB_CALLING_SERVICE_FILE} from '../../../../src/constants';
@@ -81,7 +81,7 @@ describe('WebCallingService', () => {
         }
       });
 
-      await expect(webRTCCalling.registerWebCallingLine()).resolves.toBeUndefined();
+      await expect(webRTCCalling.registerWebCallingLine(LoginOption.BROWSER)).resolves.toBeUndefined();
 
       expect(createClient).toHaveBeenCalledWith(webex, config.cc.callingClientConfig);
       expect(lineOnSpy).toHaveBeenCalledWith(LINE_EVENTS.REGISTERED, expect.any(Function));
@@ -95,7 +95,7 @@ describe('WebCallingService', () => {
     it('should reject if registration times out', async () => {
       line = callingClient.getLines().line1 as ILine;
 
-      const promise = webRTCCalling.registerWebCallingLine();
+      const promise = webRTCCalling.registerWebCallingLine(LoginOption.BROWSER);
 
       await expect(promise).rejects.toThrow('WebCallingService Registration timed out');
     }, 20003); // Increased timeout to 20 seconds
@@ -125,7 +125,7 @@ describe('WebCallingService', () => {
         }
       });
 
-      await webRTCCalling.registerWebCallingLine();
+      await webRTCCalling.registerWebCallingLine(LoginOption.BROWSER);
 
       expect(lineOnSpy).toHaveBeenCalledWith(LINE_EVENTS.INCOMING_CALL, expect.any(Function));
       expect(lineOnSpy).toHaveBeenCalledWith(LINE_EVENTS.REGISTERED, expect.any(Function));

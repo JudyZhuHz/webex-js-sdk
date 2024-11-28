@@ -1,147 +1,142 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import * as contact from "packages/@webex/plugin-cc/dist/services/Task/contact";
-import { SERVICE } from "../..";
-import { AqmReqs } from "../../core/aqm-reqs";
+import {DESTINATION_TYPE} from "../../../../../src/services/Task/types";
+import AqmReqs from "../../../../../src/services/core/aqm-reqs";
+import routingContact from "../../../../../src/services/Task/contact";
 
-jest.mock("../../core/sdk");
-jest.useFakeTimers();
+jest.mock('../../../../../src/services/core/Utils', () => ({
+  createErrDetailsObject: jest.fn(),
+  getRoutingHost: jest.fn(),
+}));
 
-jest.mock("../..", () => {
-  return {
-    __esModule: true,
-    SERVICE: {
-      featureflag: {
-        isCanaryOrg: jest.fn().mockReturnValue(true),
-        isWxccMultiPartyConfEnabled: jest.fn().mockReturnValue(false),
-        isWxccPersistCallEnabled: jest.fn().mockReturnValue(false)
-      }
-    }
-  };
-});
+jest.mock('../../../../../src/services/core/aqm-reqs');
 
-const fakeAqm: any = new AqmReqs({ onMessage: { listen: jest.fn } } as any);
+describe('AQM routing contact', () => {
+  let fakeAqm: jest.Mocked<AqmReqs>;
+  let contact: ReturnType<typeof routingContact>;
 
-(httpMock as any).request.mockResolvedValue({
-  status: 200,
-  data: [],
-  statusText: "OK",
-  headers: {},
-  config: {}
-});
+  beforeEach(() => {
+    jest.clearAllMocks();
 
-describe("Routning contacts", () => {
-  it("consultAccept", () => {
-    const req = contact.consultAccept({} as any);
+    fakeAqm = new AqmReqs() as jest.Mocked<AqmReqs>;
+    fakeAqm.reqEmpty = jest.fn().mockImplementation((fn) => fn);
+    fakeAqm.req = jest.fn().mockImplementation((fn) => fn);
+
+    contact = routingContact(fakeAqm);
+  });
+
+
+describe("Routing contacts", () => {
+  it("accept", () => {
+    fakeAqm.pendingRequests = {};
+    const req = contact.accept({
+      interactionId: "interactionId"
+    });
     expect(req).toBeDefined();
   });
-  it("consultEnd", () => {
-    const req = contact.consultEnd({} as any);
-    expect(req).toBeDefined();
-  });
-  it("consult", () => {
-    const req = contact.consult({} as any);
-    expect(req).toBeDefined();
-  });
-  it("consult queue", () => {
-    const req = contact.consult({
+
+  it("hold", () => {
+    fakeAqm.pendingRequests = {};
+    const req = contact.hold({
       interactionId: "interactionId",
-      data: {
-        agentId: "agentid",
-        queueId: "queueID",
-        trackingId: "trackingId"
-      },
-      url: "ctq"
-    } as any);
+      data: {mediaResourceId: ""}
+    });
     expect(req).toBeDefined();
   });
-  it("consult dn", () => {
+
+  it("unHold", () => {
+    fakeAqm.pendingRequests = {};
+    const req = contact.unHold({ interactionId: "interactionId", data:  {mediaResourceId: ""}});
+    expect(req).toBeDefined();
+  });
+
+  it("pauseRecording", () => {
+    fakeAqm.pendingRequests = {};
+    const req = contact.pauseRecording({
+      interactionId: "interactionId"
+    });
+    expect(req).toBeDefined();
+  });
+
+  it("resumeRecording", () => {
+    fakeAqm.pendingRequests = {};
+    const req = contact.resumeRecording({ interactionId: "interactionId", data: { autoResumed: "true" } } as any);
+    expect(req).toBeDefined();
+  });
+
+  it("consult queue", () => {
     fakeAqm.pendingRequests = {};
     const req = contact.consult({
       interactionId: "interactionId",
       data: {
-        destAgentId: "destAgentId",
-        destinationType: "DN",
+        to: "queueId",
+        destinationType: "queue",
         mediaType: "telephony"
       },
       url: ""
     } as any);
     expect(req).toBeDefined();
   });
+
   it("consult dn", () => {
     fakeAqm.pendingRequests = {};
     const req = contact.consult({
       interactionId: "interactionId",
       data: {
-        destAgentId: "destAgentId"
+        to: "9372724724",
+        destinationType: "dialNumber",
+        mediaType: "telephony"
       },
       url: ""
     } as any);
     expect(req).toBeDefined();
   });
+
+  it("consultAccept", () => {
+    const req = contact.consultAccept({} as any);
+    expect(req).toBeDefined();
+  });
+ 
   it("cancelCtq", () => {
     const req = contact.cancelCtq({} as any);
     expect(req).toBeDefined();
   });
-  it("consult", () => {
-    fakeAqm.pendingRequests = {};
-    const req = contact.consult({} as any);
-    expect(req).toBeDefined();
-  });
-  it("consultEnd", () => {
-    fakeAqm.pendingRequests = {};
-    const req = contact.consultEnd({} as any);
-    expect(req).toBeDefined();
-  });
-  it("buddyAgents", () => {
-    fakeAqm.pendingRequests = {};
-    const req = contact.buddyAgents({
-      data: {
-        agentProfileId: "agentProfileId",
-        mediaType: "meadiType"
-      }
-    });
-    expect(req).toBeDefined();
-  });
+
   it("blindTransfer", () => {
     fakeAqm.pendingRequests = {};
     const req = contact.blindTransfer({
       interactionId: "interactionId",
       data: {
-        agentId: "agentId",
-        destAgentId: "destAgentId",
-        mediaType: "meadiType",
-        destAgentTeamId: "destAgentTeamId",
-        destAgentDN: "destAgentDN",
-        destSiteId: "destSiteId"
+        to: "agentId",
+        destinationType: DESTINATION_TYPE.AGENT
       }
     });
     expect(req).toBeDefined();
   });
+
   it("vteamTransfer", () => {
     fakeAqm.pendingRequests = {};
     const req = contact.vteamTransfer({
       interactionId: "interactionId",
       data: {
-        vteamId: "vteamId",
-        vteamType: "vteamType"
+        to: "queueId",
+        destinationType: DESTINATION_TYPE.QUEUE
       }
     });
     expect(req).toBeDefined();
   });
+
   it("consultTransfer", () => {
     fakeAqm.pendingRequests = {};
     const req = contact.consultTransfer({
       interactionId: "interactionId",
       data: {
-        agentId: "agentId",
-        destAgentId: "destAgentId",
-        mediaType: "mediaType",
-        mediaResourceId: "mediaResourceId",
-        destinationType: "destinationType"
+        to: 'dn',
+        destinationType: DESTINATION_TYPE.DIALNUMBER
       }
     });
     expect(req).toBeDefined();
   });
+
   it("contact End", () => {
     fakeAqm.pendingRequests = {};
     const req = contact.end({
@@ -150,6 +145,7 @@ describe("Routning contacts", () => {
     } as any);
     expect(req).toBeDefined();
   });
+
   it("cancel Contact", () => {
     fakeAqm.pendingRequests = {};
     const req = contact.cancelTask({
@@ -158,6 +154,7 @@ describe("Routning contacts", () => {
     } as any);
     expect(req).toBeDefined();
   });
+
   it("wrapup contact", () => {
     fakeAqm.pendingRequests = {};
     const req = contact.wrapup({
@@ -166,38 +163,5 @@ describe("Routning contacts", () => {
     } as any);
     expect(req).toBeDefined();
   });
-  it("decline contact", () => {
-    fakeAqm.pendingRequests = {};
-    const req = contact.decline({
-      interactionId: "interactionId",
-      data: { mediaResourceId: "testMediaResourceId" },
-      isConsult: true
-    } as any);
-    expect(req).toBeDefined();
-  });
-  it("accept", () => {
-    fakeAqm.pendingRequests = {};
-    const req = contact.accept({
-      interactionId: "interactionId"
-    });
-    expect(req).toBeDefined();
-  });
-  it("pauseRecording", () => {
-    fakeAqm.pendingRequests = {};
-    const req = contact.pauseRecording({
-      interactionId: "interactionId"
-    });
-    expect(req).toBeDefined();
-  });
-  it("resumeRecording", () => {
-    fakeAqm.pendingRequests = {};
-    const req = contact.resumeRecording({ interactionId: "interactionId", data: { autoResumed: "true" } } as any);
-    expect(req).toBeDefined();
-  });
-  it("exit conference", () => {
-    const req = contact.exitConference({
-      interactionId: "interactionId"
-    });
-    expect(req).toBeDefined();
-  });
 });
+})

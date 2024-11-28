@@ -57,7 +57,7 @@ export default class Task extends EventEmitter {
   /**
    * This is used for incoming task accept by agent.
    * @param data
-   * @returns Promise<TaskAcceptResponse>
+   * @returns Promise<void>
    * @throws Error
    */
   public async accept(taskId: string): Promise<void> {
@@ -78,7 +78,7 @@ export default class Task extends EventEmitter {
   /**
    * This is used for the incoming task decline by agent.
    * @param data
-   * @returns Promise<TaskAcceptResponse>
+   * @returns Promise<void>
    * @throws Error
    */
   public async decline(taskId: string): Promise<void> {

@@ -35,6 +35,7 @@ jest.mock('../../../src/services/core/WebSocket/WebSocketManager');
 jest.mock('../../../src/services/core/WebSocket/connection-service');
 jest.mock('../../../src/services/WebCallingService');
 jest.mock('../../../src/services');
+jest.mock('../../../src/services/Task');
 
 global.URL.createObjectURL = jest.fn(() => 'blob:http://localhost:3000/12345');
 

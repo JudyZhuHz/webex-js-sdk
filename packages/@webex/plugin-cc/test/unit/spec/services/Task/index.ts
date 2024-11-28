@@ -1,9 +1,9 @@
 import EventEmitter from 'events';
-import Task from './Task'; // Adjust the import path as necessary
+import Task from '../../../../../src/services/Task'; // Adjust the import path as necessary
 import {LINE_EVENTS, createMicrophoneStream} from '@webex/calling';
-import { CC_EVENTS } from '../config/types';
-import { LoginOption } from '../../types';
-import { getErrorDetails } from '../core/Utils';
+import {CC_EVENTS} from '../../../../../src/services/config/types';
+import {LoginOption} from '../../../../../src/types';
+import {getErrorDetails} from '../../../../../src/services/core/Utils';
 
 jest.mock('@webex/calling', () => ({
   LINE_EVENTS: {
@@ -12,7 +12,7 @@ jest.mock('@webex/calling', () => ({
   createMicrophoneStream: jest.fn()
 }));
 
-jest.mock('../core/Utils', () => ({
+jest.mock('../../../../../src/services/core/Utils', () => ({
   getErrorDetails: jest.fn()
 }));
 
@@ -61,8 +61,8 @@ describe('Task', () => {
     expect(webCallingServiceMock.answerCall).toHaveBeenCalledWith(mockStream, 'task-id');
   });
 
-  test('should call accept API for non-BROWSER login option', async () => {
-    await task.accept('non-browser', 'task-id');
+  test('should call accept API for Extension login option', async () => {
+    await task.accept('EXTENSION', 'task-id');
 
     expect(servicesMock.contact.accept).toHaveBeenCalledWith({ interactionId: 'task-id' });
   });
