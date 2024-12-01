@@ -1,5 +1,5 @@
 import routingAgent from './agent';
-import routingContact from './Task/contact';
+import routingContact from './TaskControl/contact';
 import AgentConfigService from './config';
 import AqmReqs from './core/aqm-reqs';
 import {WebSocketManager} from './core/WebSocket/WebSocketManager';

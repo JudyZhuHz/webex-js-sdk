@@ -18,6 +18,7 @@ let deviceId;
 let agentStatusId;
 let agentStatus;
 let agentId;
+let taskControl;
 let task;
 let taskId;
 
@@ -77,21 +78,21 @@ function toggleDisplay(elementId, status) {
   }
 }
 
-const taskEvents = new CustomEvent('task:incoming', {
+const taskControlEvents = new CustomEvent('task:incoming', {
   detail: {
     task: task,
   },
 });
 
-function registerListeners(task) {
-  task.on('task:incoming', (task) => {
+function registerListeners(taskControl) {
+  taskControl.on('task:incoming', (task) => {
     task = task;
-    taskEvents.detail.task = task;
+    taskControlEvents.detail.task = task;
     
-    incomingCallListener.dispatchEvent(taskEvents);
+    incomingCallListener.dispatchEvent(taskControlEvents);
   })    
 
-  task.on('task:assigned', (task) => {
+  taskControl.on('task:assigned', (task) => {
     console.log('Call has been accepted');
     // TODO: Activate the call control buttons once the call is accepted
   }) 
@@ -159,7 +160,7 @@ function register() {
         agentLogin.innerHTML = '<option value="" selected>Choose Agent Login ...</option>'; // Clear previously selected option on agentLogin.
         dialNumber.value = '';
         dialNumber.disabled = true;
-        if(loginVoiceOptions.length > 0) loginAgentElm.disabled = false;
+        if (loginVoiceOptions.length > 0) loginAgentElm.disabled = false;
         loginVoiceOptions.forEach((voiceOptions)=> {
           const option = document.createElement('option');
           option.text = voiceOptions;
@@ -187,8 +188,8 @@ function register() {
         console.error('Event subscription failed', error);
     })
 
-    task = webex.cc.task;
-    registerListeners(task);
+    taskControl = webex.cc.taskControl;
+    registerListeners(taskControl);
 }
 
 async function handleAgentLogin(e) {
@@ -277,27 +278,30 @@ async function fetchBuddyAgents() {
 }
 
 incomingCallListener.addEventListener('task:incoming', (event) => {
-  if (task.webCallingService.loginOption === 'BROWSER') {
-    answerElm.disabled = false;
-    declineElm.disabled = false;
-  }
   taskId = event.detail.task.interactionId;
   const callerDisplay = event.detail.task.interaction.callAssociatedDetails.ani;
+  
+  if (taskControl.webCallingService.loginOption === 'BROWSER') {
+    answerElm.disabled = false;
+    declineElm.disabled = false;
 
-  incomingDetailsElm.innerText = `Call from ${callerDisplay}`;
+    incomingDetailsElm.innerText = `Call from ${callerDisplay}`;
+  } else {
+    incomingDetailsElm.innerText = `Call from ${callerDisplay}...please answer on the endpoint where the agent's extension is registered`;
+  }
 });
 
 function answer() {
   answerElm.disabled = true;
   declineElm.disabled = true;
-  webex.cc.task.accept(taskId);
+  webex.cc.taskControl.accept(taskId);
   incomingDetailsElm.innerText = 'Call Accepted';
 }
 
 function decline() {
   answerElm.disabled = true;
   declineElm.disabled = true;
-  webex.cc.task.decline(taskId);
+  webex.cc.taskControl.decline(taskId);
   incomingDetailsElm.innerText = 'No incoming calls';
 }
 

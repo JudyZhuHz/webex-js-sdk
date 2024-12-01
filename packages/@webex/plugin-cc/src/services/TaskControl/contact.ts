@@ -5,6 +5,7 @@ import AqmReqs from '../core/aqm-reqs';
 import {TIMEOUT_REQ} from '../core/constants';
 import {
   CONSULT,
+  CONSULT_ACCEPT,
   CONSULT_TRANSFER,
   END,
   HOLD,
@@ -15,8 +16,8 @@ import {
   UNHOLD,
   WRAPUP,
 } from './constants';
-import * as Contact from './types';
 import {DESTINATION_TYPE} from './types';
+import * as Contact from './types';
 
 export default function routingContact(aqm: AqmReqs) {
   return {
@@ -183,7 +184,7 @@ export default function routingContact(aqm: AqmReqs) {
      * Consult Accept contact
      */
     consultAccept: aqm.req((p: {interactionId: string}) => ({
-      url: `${TASK_API}${p.interactionId}/consult/accept`,
+      url: `${TASK_API}${p.interactionId}${CONSULT_ACCEPT}`,
       data: {},
       host: WCC_API_GATEWAY,
       err,
@@ -221,7 +222,7 @@ export default function routingContact(aqm: AqmReqs) {
       notifFail: {
         bind: {
           type: TASK_MESSAGE_TYPE,
-          data: {type: 'AgentBlindTransferFailedEvent'},
+          data: {type: CC_EVENTS.AGENT_BLIND_TRANSFER_FAILED},
         },
         errId: 'Service.aqm.task.AgentBlindTransferFailedEvent',
       },
@@ -254,31 +255,29 @@ export default function routingContact(aqm: AqmReqs) {
     /*
      * Consult Transfer contact
      */
-    consultTransfer: aqm.req(
-      (p: {interactionId: string; data: Contact.ConsultTransferPayLoad}) => ({
-        url: `${TASK_API}${p.interactionId}${CONSULT_TRANSFER}`,
-        data: p.data,
-        host: WCC_API_GATEWAY,
-        err,
-        notifSuccess: {
-          bind: {
-            type: TASK_MESSAGE_TYPE,
-            data: {
-              type: [CC_EVENTS.AGENT_CONSULT_TRANSFERRED, CC_EVENTS.AGENT_CONSULT_TRANSFERRING],
-              interactionId: p.interactionId,
-            },
+    consultTransfer: aqm.req((p: {interactionId: string; data: Contact.TransferPayLoad}) => ({
+      url: `${TASK_API}${p.interactionId}${CONSULT_TRANSFER}`,
+      data: p.data,
+      host: WCC_API_GATEWAY,
+      err,
+      notifSuccess: {
+        bind: {
+          type: TASK_MESSAGE_TYPE,
+          data: {
+            type: [CC_EVENTS.AGENT_CONSULT_TRANSFERRED, CC_EVENTS.AGENT_CONSULT_TRANSFERRING],
+            interactionId: p.interactionId,
           },
-          msg: {} as Contact.AgentContact,
         },
-        notifFail: {
-          bind: {
-            type: TASK_MESSAGE_TYPE,
-            data: {type: CC_EVENTS.AGENT_CONSULT_TRANSFER_FAILED},
-          },
-          errId: 'Service.aqm.task.AgentConsultTransferFailed',
+        msg: {} as Contact.AgentContact,
+      },
+      notifFail: {
+        bind: {
+          type: TASK_MESSAGE_TYPE,
+          data: {type: CC_EVENTS.AGENT_CONSULT_TRANSFER_FAILED},
         },
-      })
-    ),
+        errId: 'Service.aqm.task.AgentConsultTransferFailed',
+      },
+    })),
 
     /*
      * End contact
@@ -373,26 +372,3 @@ export default function routingContact(aqm: AqmReqs) {
     })),
   };
 }
-
-// /*
-//  * Get list of queues available.
-//  */
-// vteamList: aqm.req((p: { data: Contact.VTeam }) => ({
-//     url: `/vteams`,
-//     data: p.data,
-//     err,
-//     notifSuccess: {
-//       bind: {
-//         type: "VteamList",
-//         data: { jsMethod: "vteamListChanged" }
-//       },
-//       msg: {} as Contact.VTeamSuccess
-//     },
-//     notifFail: {
-//       bind: {
-//         type: "VteamListFailed",
-//         data: { statusCode: 500 }
-//       },
-//       errId: "Service.aqm.task.VteamListFailed"
-//     }
-//   })),

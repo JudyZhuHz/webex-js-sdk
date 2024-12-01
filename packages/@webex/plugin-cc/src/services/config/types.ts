@@ -32,6 +32,7 @@ export const CC_EVENTS = {
   AGENT_CTQ_FAILED: 'AgentCtqFailed',
   AGENT_CONSULT_ENDED: 'AgentConsultEnded',
   AGENT_BLIND_TRANSFERRED: 'AgentBlindTransferred',
+  AGENT_BLIND_TRANSFER_FAILED: 'AgentBlindTransferFailed',
   AGENT_VTEAM_TRANSFERRED: 'AgentVteamTransferred',
   AGENT_VTEAM_TRANSFER_FAILED: 'AgentVteamTransferFailed',
   AGENT_CONSULT_TRANSFERRING: 'AgentConsultTransferring',

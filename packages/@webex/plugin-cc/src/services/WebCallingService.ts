@@ -66,8 +66,14 @@ export default class WebCallingService extends EventEmitter {
 
   public answerCall(localAudioStream: LocalMicrophoneStream, taskId: string) {
     if (this.call) {
-      this.webex.logger.info(`[WebRtc]: Call answered: ${taskId}`);
-      this.call.answer(localAudioStream);
+      try {
+        this.webex.logger.info(`[WebRtc]: Call answered: ${taskId}`);
+        this.call.answer(localAudioStream);
+      } catch (error) {
+        this.webex.logger.error(`[WebRtc]: Failed to answer call for ${taskId}. Error: ${error}`);
+        // Optionally, throw the error to allow the invoker to handle it
+        throw error;
+      }
     } else {
       this.webex.logger.log(`[WebRtc]: Cannot answer a non WebRtc Call: ${taskId}`);
     }
@@ -92,10 +98,16 @@ export default class WebCallingService extends EventEmitter {
 
   public declinecall(taskId: string) {
     if (this.call) {
-      this.webex.logger.info(`[WebRtc]: Call end requested: ${taskId}`);
-      this.call.end();
+      try {
+        this.webex.logger.info(`[WebRtc]: Call end requested: ${taskId}`);
+        this.call.end();
+      } catch (error) {
+        this.webex.logger.error(`[WebRtc]: Failed to end call: ${taskId}. Error: ${error}`);
+        // Optionally, throw the error to allow the invoker to handle it
+        throw error;
+      }
     } else {
-      this.webex.logger.log(`[WebRtc]: Cannot mute a non WebRtc Call: ${taskId}`);
+      this.webex.logger.log(`[WebRtc]: Cannot end a non WebRtc Call: ${taskId}`);
     }
   }
 }

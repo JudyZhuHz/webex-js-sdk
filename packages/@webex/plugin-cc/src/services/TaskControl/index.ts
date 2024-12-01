@@ -1,52 +1,59 @@
 import EventEmitter from 'events';
 import {ICall, LINE_EVENTS, LocalMicrophoneStream, createMicrophoneStream} from '@webex/calling';
-import Services from '..';
 import {getErrorDetails} from '../core/Utils';
 import WebCallingService from '../WebCallingService';
 import {LoginOption} from '../../types';
 import {CC_FILE} from '../../constants';
 import {CC_EVENTS} from '../config/types';
+import {WebSocketManager} from '../core/WebSocket/WebSocketManager';
+import routingContact from './contact';
+import {AgentContact, TASK_EVENTS, TaskResponse} from './types';
 
-export default class Task extends EventEmitter {
-  private localAudioStream: LocalMicrophoneStream;
-  private services: Services; // This will be used later for invoking Contact APIs
-  private webCallingService: WebCallingService;
-  private taskPayload: any;
+export default class TaskControl extends EventEmitter {
+  private contact: ReturnType<typeof routingContact>;
   private call: ICall;
+  private localAudioStream: LocalMicrophoneStream;
+  private webCallingService: WebCallingService;
+  private webSocketManager: WebSocketManager;
+  private task: AgentContact;
 
-  constructor(services: Services, webCallingService: WebCallingService) {
+  constructor(
+    contact: ReturnType<typeof routingContact>,
+    webSocketManager: WebSocketManager,
+    webCallingService: WebCallingService
+  ) {
     super();
-    this.services = services;
+    this.contact = contact;
     this.webCallingService = webCallingService;
+    this.webSocketManager = webSocketManager;
     this.registerTaskListeners();
-    this.registerCallingEvent();
+    this.registerIncomingCallEvent();
   }
 
-  private registerCallingEvent() {
+  private registerIncomingCallEvent() {
     this.webCallingService.on(LINE_EVENTS.INCOMING_CALL, (call) => {
-      if (this.taskPayload) {
-        this.emit('task:incoming', this.taskPayload);
-      } else {
-        this.call = call;
+      if (this.task) {
+        this.emit(TASK_EVENTS.TASK_INCOMING, this.task);
       }
+      this.call = call;
     });
   }
 
   private registerTaskListeners() {
     // TODO: This event reception approach will be changed once state machine is implemented
-    this.services.webSocketManager.on('message', (event) => {
+    this.webSocketManager.on('message', (event) => {
       const payload = JSON.parse(event);
       switch (payload.data.type) {
         case CC_EVENTS.AGENT_CONTACT_RESERVED:
-          this.taskPayload = payload.data;
+          this.task = payload.data;
           if (this.webCallingService.loginOption !== LoginOption.BROWSER) {
-            this.emit('task:incoming', payload.data);
+            this.emit(TASK_EVENTS.TASK_INCOMING, payload.data);
           } else if (this.call) {
-            this.emit('task:incoming', payload.data);
+            this.emit(TASK_EVENTS.TASK_INCOMING, payload.data);
           }
           break;
         case CC_EVENTS.AGENT_CONTACT_ASSIGNED:
-          this.emit('task:assigned', payload.data);
+          this.emit(TASK_EVENTS.TASK_ASSIGNED, payload.data);
           break;
         default:
           break;
@@ -59,17 +66,23 @@ export default class Task extends EventEmitter {
    * @param data
    * @returns Promise<void>
    * @throws Error
+   * @example
+   * ```typescript
+   * webex.cc.task.accept(taskId).then(()=>{}).catch(()=>{})
+   * ```
    */
-  public async accept(taskId: string) {
+  public async accept(taskId: string): Promise<TaskResponse> {
     try {
       if (this.webCallingService.loginOption === LoginOption.BROWSER) {
         // @ts-ignore
         this.localAudioStream = await createMicrophoneStream({audio: true});
         this.webCallingService.answerCall(this.localAudioStream, taskId);
-      } else {
-        // TODO: Invoke the accept API from services layer. This is going to be used in Outbound Dialer scenario
-        this.services.contact.accept({interactionId: taskId});
+
+        return Promise.resolve(); // TODO: Update this with sending the task object received in AgentContactAssigned
       }
+
+      // TODO: Invoke the accept API from services layer. This is going to be used in Outbound Dialer scenario
+      return this.contact.accept({interactionId: taskId});
     } catch (error) {
       throw getErrorDetails(error, 'accept', CC_FILE);
     }
@@ -80,10 +93,15 @@ export default class Task extends EventEmitter {
    * @param data
    * @returns Promise<void>
    * @throws Error
+   *  * ```typescript
+   * webex.cc.task.decline(taskId).then(()=>{}).catch(()=>{})
+   * ```
    */
-  public async decline(taskId: string) {
+  public async decline(taskId: string): Promise<TaskResponse> {
     try {
       this.webCallingService.declinecall(taskId);
+
+      return Promise.resolve();
     } catch (error) {
       throw getErrorDetails(error, 'decline', CC_FILE);
     }

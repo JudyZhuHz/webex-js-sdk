@@ -1,10 +1,10 @@
 import EventEmitter from 'events';
-import Task from '../../../../../src/services/Task'; // Adjust the import path as necessary
 import {LINE_EVENTS, createMicrophoneStream} from '@webex/calling';
 import {CC_EVENTS} from '../../../../../src/services/config/types';
 import {LoginOption} from '../../../../../src/types';
 import {getErrorDetails} from '../../../../../src/services/core/Utils';
 import { CC_FILE } from '../../../../../src/constants';
+import TaskControl from '../../../../../src/services/TaskControl';
 
 jest.mock('@webex/calling', () => ({
   LINE_EVENTS: {
@@ -38,7 +38,7 @@ describe('Task', () => {
       
     };
 
-    task = new Task(servicesMock, webCallingServiceMock);
+    task = new TaskControl(servicesMock.contact, servicesMock.webSocketManager, webCallingServiceMock);
   });
 
   it('should emit task:incoming when AGENT_CONTACT_RESERVED event is received for Browser', () => {

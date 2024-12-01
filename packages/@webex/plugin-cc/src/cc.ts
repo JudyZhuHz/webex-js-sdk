@@ -24,7 +24,7 @@ import {getErrorDetails} from './services/core/Utils';
 import {Profile, WelcomeEvent} from './services/config/types';
 import {AGENT_STATE_AVAILABLE} from './services/config/constants';
 import {ConnectionLostDetails} from './services/core/WebSocket/types';
-import Task from './services/Task';
+import TaskControl from './services/TaskControl';
 
 export default class ContactCenter extends WebexPlugin implements IContactCenter {
   namespace = 'cc';
@@ -34,7 +34,7 @@ export default class ContactCenter extends WebexPlugin implements IContactCenter
   private webCallingService: WebCallingService;
   private services: Services;
   private httpRequest: HttpRequest;
-  private task: Task;
+  private taskControl: TaskControl;
 
   constructor(...args) {
     super(...args);
@@ -59,7 +59,11 @@ export default class ContactCenter extends WebexPlugin implements IContactCenter
       });
 
       this.webCallingService = new WebCallingService(this.$webex, this.$config.callingClientConfig);
-      this.task = new Task(this.services, this.webCallingService);
+      this.taskControl = new TaskControl(
+        this.services.contact,
+        this.services.webSocketManager,
+        this.webCallingService
+      );
 
       LoggerProxy.initialize(this.$webex.logger);
     });

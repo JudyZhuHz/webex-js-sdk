@@ -1,6 +1,6 @@
 import {CallingClientConfig} from '@webex/calling';
 import * as Agent from './services/agent/types';
-import * as Contact from './services/Task/types';
+import * as Contact from './services/TaskControl/types';
 import {Profile} from './services/config/types';
 
 type Enum<T extends Record<string, unknown>> = T[keyof T];
@@ -223,7 +223,6 @@ export type RequestBody =
   | Contact.ResumeRecordingPayload
   | Contact.ConsultPayload
   | Contact.TransferPayLoad
-  | Contact.ConsultTransferPayLoad
   | Contact.cancelCtq
   | Contact.WrapupPayLoad;
 

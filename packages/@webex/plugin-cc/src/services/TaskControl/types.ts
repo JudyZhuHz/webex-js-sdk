@@ -1,17 +1,14 @@
 import {Msg} from '../core/GlobalTypes';
 
-export enum DESTINATION_TYPE {
-  QUEUE = 'queue',
-  DIALNUMBER = 'dialNumber',
-  AGENT = 'agent',
-  EPDN = 'entrypointDialNumber',
-  ENTRYPOINT = 'entryPoint',
-}
+type Enum<T extends Record<string, unknown>> = T[keyof T];
 
-type DestinationType =
-  | DESTINATION_TYPE.AGENT
-  | DESTINATION_TYPE.QUEUE
-  | DESTINATION_TYPE.DIALNUMBER;
+export const DESTINATION_TYPE = {
+  QUEUE: 'queue',
+  DIALNUMBER: 'dialNumber',
+  AGENT: 'agent',
+};
+
+export type DestinationType = Enum<typeof DESTINATION_TYPE>;
 
 type MEDIA_CHANNEL =
   | 'email'
@@ -22,6 +19,23 @@ type MEDIA_CHANNEL =
   | 'facebook'
   | 'whatsapp'
   | string;
+
+export const TASK_EVENTS = {
+  TASK_INCOMING: 'task:incoming',
+  TASK_ASSIGNED: 'task:assigned',
+  TASK_UNASSIGNED: 'task:unassigned',
+  TASK_HOLD: 'task:hold',
+  TASK_UNHOLD: 'task:unhold',
+  TASK_CONSULT: 'task:consult',
+  TASK_CONSULT_END: 'task:consultEnd',
+  TASK_CONSULT_ACCEPT: 'task:consultAccepted',
+  TASK_PAUSE: 'task:pause',
+  TASK_RESUME: 'task:resume',
+  TASK_END: 'task:end',
+  TASK_WRAPUP: 'task:wrapup',
+} as const;
+
+export type TASK_EVENTS = Enum<typeof TASK_EVENTS>;
 
 export type AgentContact = Msg<{
   mediaResourceId: string;
@@ -65,38 +79,6 @@ export type AgentContact = Msg<{
   };
   supervisorName?: string;
 }>;
-
-export type Contact = {
-  /** Contact start time in timestamp */
-  cstts: string;
-  /** Contact end time in timestamp */
-  cetts: string;
-  /** talk duration in timestamp */
-  talkDuration: number;
-  agentName: string;
-  /** entry point of the contact */
-  entrypointName?: string;
-  /** Channel type pof the contact e.g. email|chat|telephony */
-  channelTypeexport: string;
-  /** ani of the customer */
-  ani: string;
-  displayAni: string;
-  sid: string;
-  /** transcript id */
-  transcript?: string;
-  /** outbound transcript id */
-  outboundTranscript?: string;
-  terminationType?: string;
-  /** Contact Subject */
-  subject?: string;
-  customerName: string;
-  dnis: string;
-  callDirection: string;
-  subChannelType?: string;
-  wrapUpCode: string;
-  isCallback?: boolean;
-  outdialType?: string;
-};
 
 export type VTeam = {
   agentProfileId: string;
@@ -237,11 +219,6 @@ export type TransferPayLoad = {
   destinationType: DestinationType;
 };
 
-export type ConsultTransferPayLoad = {
-  to: string;
-  destinationType: DestinationType;
-};
-
 export type ConsultPayload = {
   to: string | undefined;
   destinationType: string;
@@ -284,3 +261,5 @@ export type ContactCleanupData = {
     type: string;
   };
 };
+
+export type TaskResponse = AgentContact | Error | void;

@@ -20,6 +20,7 @@ import {CC_FILE} from '../../../src/constants';
 import '../../../__mocks__/workerMock';
 import {Profile} from '../../../src/services/config/types';
 
+
 jest.mock('../../../src/logger-proxy', () => ({
   __esModule: true,
   default: {
@@ -34,17 +35,17 @@ jest.mock('../../../src/services/config');
 jest.mock('../../../src/services/core/WebSocket/WebSocketManager');
 jest.mock('../../../src/services/core/WebSocket/connection-service');
 jest.mock('../../../src/services/WebCallingService');
-jest.mock('../../../src/services');
-jest.mock('../../../src/services/Task');
+jest.mock('../../../src/services/TaskControl');
 
 global.URL.createObjectURL = jest.fn(() => 'blob:http://localhost:3000/12345');
 
 describe('webex.cc', () => {
   let webex;
   let mockWebSocketManager;
+  let mockContact;
 
   beforeEach(() => {
-    webex = MockWebex({
+    webex = new MockWebex({
       children: {
         cc: ContactCenter,
       },
@@ -60,11 +61,25 @@ describe('webex.cc', () => {
       once: jest.fn((event, callback) => callback()),
     }) as unknown as WebexSDK;
 
-    // Instantiate ContactCenter to ensure it's fully initialized
-    webex.cc = new ContactCenter({parent: webex});
-
     mockWebSocketManager = {
       initWebSocket: jest.fn(),
+    };
+
+    mockContact = {
+      accept: jest.fn(),
+      hold: jest.fn(),
+      unHold: jest.fn(),
+      pauseRecording: jest.fn(),
+      resumeRecording: jest.fn(),
+      consult: jest.fn(),
+      consultAccept: jest.fn(),
+      blindTransfer: jest.fn(),
+      vteamTransfer: jest.fn(),
+      consultTransfer: jest.fn(),
+      end: jest.fn(),
+      wrapup: jest.fn(),
+      cancelTask: jest.fn(),
+      cancelCtq: jest.fn()
     };
 
     // Mock Services instance
@@ -83,9 +98,12 @@ describe('webex.cc', () => {
       connectionService: {
         on: jest.fn(),
       },
+      contact: mockContact
     };
-    (Services.getInstance as jest.Mock).mockReturnValue(mockServicesInstance);
-    webex.cc.services = mockServicesInstance;
+
+    jest.spyOn(Services, 'getInstance').mockReturnValue(mockServicesInstance);
+    // Instantiate ContactCenter to ensure it's fully initialized
+    webex.cc = new ContactCenter({parent: webex});
   });
 
   afterEach(() => {
