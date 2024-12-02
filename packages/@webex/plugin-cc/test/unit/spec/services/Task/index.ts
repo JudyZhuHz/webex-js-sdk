@@ -1,14 +1,11 @@
 import 'jsdom-global/register';
 import {LocalMicrophoneStream} from '@webex/calling';
 import {LoginOption} from '../../../../../src/types';
-import {getErrorDetails} from '../../../../../src/services/core/Utils';
 import { CC_FILE } from '../../../../../src/constants';
 import Task from '../../../../../src/services/task';
+import { getErrorDetails } from '../../../../../src/services/core/Utils';
 
 jest.mock('@webex/calling');
-jest.mock('../../../../../src/services/core/Utils', () => ({
-  getErrorDetails: jest.fn()
-}));
 
 describe('Task', () => {
   let task;
@@ -25,7 +22,7 @@ describe('Task', () => {
     webCallingServiceMock = {
       loginOption: LoginOption.BROWSER,
       answerCall: jest.fn(),
-      declinecall: jest.fn()
+      declineCall: jest.fn()
     };
 
       // Mock task data
@@ -65,13 +62,20 @@ describe('Task', () => {
   });
 
   it('should handle errors in accept method', async () => {
-    const error = new Error('Test Error');
-    navigator.mediaDevices.getUserMedia.mockRejectedValue(error);
-    getErrorDetails.mockReturnValue(error);
+    const error = {
+      details: {
+        trackingId: '1234',
+        data: {
+          reason: 'Error while performing accept',
+        },
+      },
+    };
+
+    webCallingServiceMock.answerCall.mockImplementation(() => { throw error; });
 
     const acceptResponse = await task.accept(taskId);
 
-    expect(webCallingServiceMock.answercall).toHaveBeenCalledWith(taskId)
+    expect(webCallingServiceMock.answerCall).toHaveBeenCalledWith(taskId)
     expect(acceptResponse).rejects.toThrow(error);
     expect(getErrorDetails).toHaveBeenCalledWith(error, 'accept', CC_FILE);
   });
@@ -79,17 +83,24 @@ describe('Task', () => {
   it('should decline call using webCallingService', async () => {
     await task.decline(taskId);
 
-    expect(webCallingServiceMock.declinecall).toHaveBeenCalledWith(taskId);
+    expect(webCallingServiceMock.declineCall).toHaveBeenCalledWith(taskId);
   });
 
   it('should handle errors in decline method', async () => {
-    const error = new Error('Test Error');
-    webCallingServiceMock.declinecall.mockImplementation(() => { throw error; });
-    getErrorDetails.mockReturnValue(error);
+    const error = {
+      details: {
+        trackingId: '1234',
+        data: {
+          reason: 'Error while performing decline',
+        },
+      },
+    };
+
+    webCallingServiceMock.declineCall.mockImplementation(() => { throw error; });
 
     const declineResponse = await task.decline(taskId);
 
-    expect(webCallingServiceMock.declinecall).toHaveBeenCalledWith(taskId)
+    expect(webCallingServiceMock.declineCall).toHaveBeenCalledWith(taskId)
     expect(declineResponse).rejects.toThrow(error);
     expect(getErrorDetails).toHaveBeenCalledWith(error, 'decline', CC_FILE);
   }); 

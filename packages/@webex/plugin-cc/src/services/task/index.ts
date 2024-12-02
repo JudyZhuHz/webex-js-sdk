@@ -70,7 +70,7 @@ export default class Task implements ITask {
    */
   public async decline(taskId: TaskId): Promise<TaskResponse> {
     try {
-      this.webCallingService.declinecall(taskId);
+      this.webCallingService.declineCall(taskId);
 
       return Promise.resolve();
     } catch (error) {

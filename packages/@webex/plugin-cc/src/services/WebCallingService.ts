@@ -96,7 +96,7 @@ export default class WebCallingService extends EventEmitter {
     return false;
   }
 
-  public declinecall(taskId: string) {
+  public declineCall(taskId: string) {
     if (this.call) {
       try {
         this.webex.logger.info(`[WebRtc]: Call end requested: ${taskId}`);
