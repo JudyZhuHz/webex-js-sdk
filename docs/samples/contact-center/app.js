@@ -78,23 +78,16 @@ function toggleDisplay(elementId, status) {
   }
 }
 
-const taskControlEvents = new CustomEvent('task:incoming', {
+const taskEvents = new CustomEvent('task:incoming', {
   detail: {
     task: task,
   },
 });
 
-function registerListeners(taskControl) {
-  taskControl.on('task:incoming', (task) => {
-    task = task;
-    taskControlEvents.detail.task = task;
-    
-    incomingCallListener.dispatchEvent(taskControlEvents);
-  })    
-
-  taskControl.on('task:assigned', (task) => {
+// TODO: Activate the call control buttons once the call is accepted and refctor this
+function registerListeners(task) {
+  task.on('task:assigned', (task) => {
     console.log('Call has been accepted');
-    // TODO: Activate the call control buttons once the call is accepted
   }) 
 }
 
@@ -188,8 +181,12 @@ function register() {
         console.error('Event subscription failed', error);
     })
 
-    taskControl = webex.cc.taskControl;
-    registerListeners(taskControl);
+    webex.cc.on('task:incoming', (task) => {
+      task = task;
+      taskEvents.detail.task = task;
+      
+      incomingCallListener.dispatchEvent(taskEvents);
+    }) 
 }
 
 async function handleAgentLogin(e) {
@@ -278,10 +275,10 @@ async function fetchBuddyAgents() {
 }
 
 incomingCallListener.addEventListener('task:incoming', (event) => {
-  taskId = event.detail.task.interactionId;
-  const callerDisplay = event.detail.task.interaction.callAssociatedDetails.ani;
+  taskId = event.detail.task.data.interactionId;
+  const callerDisplay = event.detail.task.data.interaction.callAssociatedDetails.ani;
   
-  if (taskControl.webCallingService.loginOption === 'BROWSER') {
+  if (task.webCallingService.loginOption === 'BROWSER') {
     answerElm.disabled = false;
     declineElm.disabled = false;
 
@@ -294,14 +291,14 @@ incomingCallListener.addEventListener('task:incoming', (event) => {
 function answer() {
   answerElm.disabled = true;
   declineElm.disabled = true;
-  webex.cc.taskControl.accept(taskId);
+  task.accept(taskId);
   incomingDetailsElm.innerText = 'Call Accepted';
 }
 
 function decline() {
   answerElm.disabled = true;
   declineElm.disabled = true;
-  webex.cc.taskControl.decline(taskId);
+  task.decline(taskId);
   incomingDetailsElm.innerText = 'No incoming calls';
 }
 

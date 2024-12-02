@@ -1,5 +1,7 @@
 import {Msg} from '../core/GlobalTypes';
 
+export type TaskId = string;
+
 type Enum<T extends Record<string, unknown>> = T[keyof T];
 
 export const DESTINATION_TYPE = {
@@ -37,76 +39,7 @@ export const TASK_EVENTS = {
 
 export type TASK_EVENTS = Enum<typeof TASK_EVENTS>;
 
-export type AgentContact = Msg<{
-  mediaResourceId: string;
-  eventType: string;
-  eventTime?: number;
-  agentId: string;
-  destAgentId: string;
-  trackingId: string;
-  consultMediaResourceId: string;
-  interaction: Interaction;
-  participantId?: string;
-  fromOwner?: boolean;
-  toOwner?: boolean;
-  childInteractionId?: string;
-  interactionId: string;
-  orgId: string;
-  owner: string;
-  queueMgr: string;
-  queueName?: string;
-  type: string;
-  ronaTimeout?: number;
-  isConsulted?: boolean;
-  isConferencing: boolean;
-  updatedBy?: string;
-  destinationType?: string;
-  autoResumed?: boolean;
-  reasonCode?: string | number;
-  reason?: string;
-  consultingAgentId?: string;
-  taskId?: string;
-  task?: Interaction;
-  supervisorId?: string;
-  monitorType?: string;
-  supervisorDN?: string;
-  id?: string; // unique id in monitoring offered event
-  isWebCallMute?: boolean;
-  reservationInteractionId?: string;
-  reservedAgentChannelId?: string;
-  monitoringState?: {
-    type: string;
-  };
-  supervisorName?: string;
-}>;
-
-export type VTeam = {
-  agentProfileId: string;
-  agentSessionId: string;
-  channelType: string;
-  type: string;
-  trackingId?: string;
-};
-
-export type VteamDetails = {
-  name: string;
-  channelType: string;
-  id: string;
-  type: string;
-  analyzerId: string;
-};
-
-export type VTeamSuccess = Msg<{
-  data: {
-    vteamList: Array<VteamDetails>;
-    allowConsultToQueue: boolean;
-  };
-  jsMethod: string;
-  callData: string;
-  agentSessionId: string;
-}>;
-
-export type Interaction = {
+type Interaction = {
   isFcManaged: boolean;
   isTerminated: boolean;
   mediaType: MEDIA_CHANNEL;
@@ -206,6 +139,110 @@ export type Interaction = {
   >;
 };
 
+export type TaskData = {
+  mediaResourceId: string;
+  eventType: string;
+  eventTime?: number;
+  agentId: string;
+  destAgentId: string;
+  trackingId: string;
+  consultMediaResourceId: string;
+  interaction: Interaction;
+  participantId?: string;
+  fromOwner?: boolean;
+  toOwner?: boolean;
+  childInteractionId?: string;
+  interactionId: string;
+  orgId: string;
+  owner: string;
+  queueMgr: string;
+  queueName?: string;
+  type: string;
+  ronaTimeout?: number;
+  isConsulted?: boolean;
+  isConferencing: boolean;
+  updatedBy?: string;
+  destinationType?: string;
+  autoResumed?: boolean;
+  reasonCode?: string | number;
+  reason?: string;
+  consultingAgentId?: string;
+  taskId?: string;
+  task?: Interaction;
+  id?: string; // unique id in monitoring offered event
+  isWebCallMute?: boolean;
+  reservationInteractionId?: string;
+};
+
+export type AgentContact = Msg<{
+  mediaResourceId: string;
+  eventType: string;
+  eventTime?: number;
+  agentId: string;
+  destAgentId: string;
+  trackingId: string;
+  consultMediaResourceId: string;
+  interaction: Interaction;
+  participantId?: string;
+  fromOwner?: boolean;
+  toOwner?: boolean;
+  childInteractionId?: string;
+  interactionId: string;
+  orgId: string;
+  owner: string;
+  queueMgr: string;
+  queueName?: string;
+  type: string;
+  ronaTimeout?: number;
+  isConsulted?: boolean;
+  isConferencing: boolean;
+  updatedBy?: string;
+  destinationType?: string;
+  autoResumed?: boolean;
+  reasonCode?: string | number;
+  reason?: string;
+  consultingAgentId?: string;
+  taskId?: string;
+  task?: Interaction;
+  supervisorId?: string;
+  monitorType?: string;
+  supervisorDN?: string;
+  id?: string; // unique id in monitoring offered event
+  isWebCallMute?: boolean;
+  reservationInteractionId?: string;
+  reservedAgentChannelId?: string;
+  monitoringState?: {
+    type: string;
+  };
+  supervisorName?: string;
+}>;
+
+export type VTeam = {
+  agentProfileId: string;
+  agentSessionId: string;
+  channelType: string;
+  type: string;
+  trackingId?: string;
+};
+
+export type VteamDetails = {
+  name: string;
+  channelType: string;
+  id: string;
+  type: string;
+  analyzerId: string;
+};
+
+export type VTeamSuccess = Msg<{
+  data: {
+    vteamList: Array<VteamDetails>;
+    allowConsultToQueue: boolean;
+  };
+  jsMethod: string;
+  callData: string;
+  agentSessionId: string;
+}>;
+
 export type HoldResumePayload = {
   mediaResourceId: string;
 };
@@ -263,3 +300,31 @@ export type ContactCleanupData = {
 };
 
 export type TaskResponse = AgentContact | Error | void;
+
+export interface ITask {
+  /**
+   * Event data received in the CC events
+   */
+  data: TaskData;
+  /**
+   * Answers/accepts the incoming task
+   *
+   * @param taskId - Unique Task Identifier
+   * @example
+   * ```
+   * task.accept(taskId);
+   * ```
+   */
+  accept(taskId: TaskId): Promise<TaskResponse>;
+  /**
+   * Decline the incoming task for Browser Login
+   *
+   * @param taskId - Unique Task Identifier
+   * @example
+   * ```
+   * task.decline(taskId);
+   * ```
+   */
+  decline(taskId: TaskId): Promise<TaskResponse>;
+  // TODO: Add the remianing public methods
+}

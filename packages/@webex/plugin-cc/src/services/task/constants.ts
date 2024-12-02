@@ -11,3 +11,5 @@ export const PAUSE = '/record/pause';
 export const RESUME = 'record/resume';
 export const WRAPUP = '/wrapup';
 export const END = '/end';
+export const TASK_MANAGER_FILE = 'taskManager';
+export const TASK_FILE = 'task';

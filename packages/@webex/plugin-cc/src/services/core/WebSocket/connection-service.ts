@@ -1,5 +1,5 @@
 import {EventEmitter} from 'events';
-import {WebSocketManager} from './WebSocketManager';
+import {WebSocketManager} from './WebsocketManager';
 import LoggerProxy from '../../../logger-proxy';
 import {ConnectionServiceOptions, ConnectionLostDetails, ConnectionProp} from './types';
 import {

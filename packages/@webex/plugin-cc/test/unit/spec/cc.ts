@@ -35,7 +35,7 @@ jest.mock('../../../src/services/config');
 jest.mock('../../../src/services/core/WebSocket/WebSocketManager');
 jest.mock('../../../src/services/core/WebSocket/connection-service');
 jest.mock('../../../src/services/WebCallingService');
-jest.mock('../../../src/services/TaskControl');
+jest.mock('../../../src/services/task/TaskManager');
 
 global.URL.createObjectURL = jest.fn(() => 'blob:http://localhost:3000/12345');
 
@@ -45,7 +45,7 @@ describe('webex.cc', () => {
   let mockContact;
 
   beforeEach(() => {
-    webex = new MockWebex({
+    webex = MockWebex({
       children: {
         cc: ContactCenter,
       },

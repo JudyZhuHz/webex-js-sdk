@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {DESTINATION_TYPE} from "../../../../../src/services/TaskControl/types";
+import {DESTINATION_TYPE} from "../../../../../src/services/task/types";
 import AqmReqs from "../../../../../src/services/core/aqm-reqs";
-import routingContact from "../../../../../src/services/TaskControl/contact";
+import routingContact from "../../../../../src/services/task/contact";
 
 jest.mock('../../../../../src/services/core/Utils', () => ({
   createErrDetailsObject: jest.fn(),

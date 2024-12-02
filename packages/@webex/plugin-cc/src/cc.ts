@@ -1,4 +1,5 @@
 import {WebexPlugin} from '@webex/webex-core';
+import EventEmitter from 'events';
 import {
   SetStateResponse,
   CCPluginConfig,
@@ -14,7 +15,6 @@ import {
   SubscribeRequest,
 } from './types';
 import {READY, CC_FILE, EMPTY_STRING} from './constants';
-import WebCallingService from './services/WebCallingService';
 import {AGENT, WEB_RTC_PREFIX} from './services/constants';
 import Services from './services';
 import HttpRequest from './services/core/HttpRequest';
@@ -23,22 +23,26 @@ import {StateChange, Logout} from './services/agent/types';
 import {getErrorDetails} from './services/core/Utils';
 import {Profile, WelcomeEvent} from './services/config/types';
 import {AGENT_STATE_AVAILABLE} from './services/config/constants';
-import {ConnectionLostDetails} from './services/core/WebSocket/types';
-import TaskControl from './services/TaskControl';
+import {ConnectionLostDetails} from './services/core/websocket/types';
+import TaskManager from './services/task/TaskManager';
+import WebCallingService from './services/WebCallingService';
+import {ITask, TASK_EVENTS} from './services/task/types';
 
 export default class ContactCenter extends WebexPlugin implements IContactCenter {
   namespace = 'cc';
   private $config: CCPluginConfig;
   private $webex: WebexSDK;
+  private eventEmitter: EventEmitter;
   private agentConfig: Profile;
   private webCallingService: WebCallingService;
   private services: Services;
   private httpRequest: HttpRequest;
-  private taskControl: TaskControl;
+  private taskManager: TaskManager;
 
   constructor(...args) {
     super(...args);
 
+    this.eventEmitter = new EventEmitter();
     // @ts-ignore
     this.$webex = this.webex;
 
@@ -59,13 +63,23 @@ export default class ContactCenter extends WebexPlugin implements IContactCenter
       });
 
       this.webCallingService = new WebCallingService(this.$webex, this.$config.callingClientConfig);
-      this.taskControl = new TaskControl(
+      this.taskManager = TaskManager.getTaskManager(
         this.services.contact,
-        this.services.webSocketManager,
-        this.webCallingService
+        this.webCallingService,
+        this.services.webSocketManager
       );
 
+      this.incomingTaskListener();
       LoggerProxy.initialize(this.$webex.logger);
+    });
+  }
+
+  /**
+   * An Incoming Call listener.
+   */
+  private incomingTaskListener() {
+    this.taskManager.on(TASK_EVENTS.TASK_INCOMING, (task: ITask) => {
+      this.eventEmitter.emit(TASK_EVENTS.TASK_INCOMING, task);
     });
   }
 

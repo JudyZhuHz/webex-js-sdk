@@ -16,8 +16,8 @@ import {
   UNHOLD,
   WRAPUP,
 } from './constants';
-import {DESTINATION_TYPE} from './types';
 import * as Contact from './types';
+import {DESTINATION_TYPE} from './types';
 
 export default function routingContact(aqm: AqmReqs) {
   return {

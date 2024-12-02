@@ -4,7 +4,7 @@ import {CC_EVENTS} from '../../../../../src/services/config/types';
 import {LoginOption} from '../../../../../src/types';
 import {getErrorDetails} from '../../../../../src/services/core/Utils';
 import { CC_FILE } from '../../../../../src/constants';
-import TaskControl from '../../../../../src/services/TaskControl';
+import TaskControl from '../../../../../src/services/task';
 
 jest.mock('@webex/calling', () => ({
   LINE_EVENTS: {
@@ -109,13 +109,13 @@ describe('Task', () => {
     expect(servicesMock.contact.accept).toHaveBeenCalledWith({ interactionId: 'task-id' });
   });
 
-  // it('should handle errors in accept method', async () => {
-  //   const error = new Error('Test Error');
-  //   createMicrophoneStream.mockRejectedValue(error);
+  it('should handle errors in accept method', async () => {
+    const error = new Error('Test Error');
+    createMicrophoneStream.mockRejectedValue(error);
 
-  //   expect(await task.decline('task-id')).toThrow(error);
-  //   expect(getErrorDetails).toHaveBeenCalledWith(error, 'accept', CC_FILE);
-  // });
+    expect(await task.decline('task-id')).rejects.toThrow(error);
+    expect(getErrorDetails).toHaveBeenCalledWith(error, 'accept', CC_FILE);
+  });
 
   it('should decline call using webCallingService', async () => {
     await task.decline('task-id');
@@ -123,12 +123,12 @@ describe('Task', () => {
     expect(webCallingServiceMock.declinecall).toHaveBeenCalledWith('task-id');
   });
 
-  // it('should handle errors in decline method', async () => {
-  //   const error = new Error('Test Error');
-  //   webCallingServiceMock.declinecall.mockImplementation(() => { throw error; });
+  it('should handle errors in decline method', async () => {
+    const error = new Error('Test Error');
+    webCallingServiceMock.declinecall.mockImplementation(() => { throw error; });
 
-  //   await task.decline('task-id');
-  //   expect(webCallingServiceMock.declinecall).toHaveBeenCalledWith('task-id');
-  //   expect(getErrorDetails).toHaveBeenCalledWith(error, 'decline', CC_FILE);
-  // });
+    await task.decline('task-id');
+    expect(webCallingServiceMock.declinecall).toHaveBeenCalledWith('task-id');
+    expect(getErrorDetails).toHaveBeenCalledWith(error, 'decline', CC_FILE);
+  });
 });

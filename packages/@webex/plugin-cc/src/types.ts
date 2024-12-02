@@ -1,6 +1,6 @@
 import {CallingClientConfig} from '@webex/calling';
 import * as Agent from './services/agent/types';
-import * as Contact from './services/TaskControl/types';
+import * as Contact from './services/task/types';
 import {Profile} from './services/config/types';
 
 type Enum<T extends Record<string, unknown>> = T[keyof T];
