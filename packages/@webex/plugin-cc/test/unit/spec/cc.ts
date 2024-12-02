@@ -19,6 +19,7 @@ import {CC_FILE} from '../../../src/constants';
 // Mock the Worker API
 import '../../../__mocks__/workerMock';
 import {Profile} from '../../../src/services/config/types';
+import TaskManager from '../../../src/services/task/TaskManager';
 
 
 jest.mock('../../../src/logger-proxy', () => ({
@@ -35,7 +36,6 @@ jest.mock('../../../src/services/config');
 jest.mock('../../../src/services/core/WebSocket/WebSocketManager');
 jest.mock('../../../src/services/core/WebSocket/connection-service');
 jest.mock('../../../src/services/WebCallingService');
-jest.mock('../../../src/services/task/TaskManager');
 
 global.URL.createObjectURL = jest.fn(() => 'blob:http://localhost:3000/12345');
 
@@ -101,7 +101,23 @@ describe('webex.cc', () => {
       contact: mockContact
     };
 
+    const mockTaskManager = {
+      contact: mockContact,
+      call: undefined,
+      taskCollection: {},
+      webCallingService: undefined,
+      webSocketManager: mockWebSocketManager,
+      task: undefined,
+      registerIncomingCallEvent: jest.fn(),
+      registerTaskListeners: jest.fn(),
+      getTask: jest.fn(),
+      getActiveTasks: jest.fn(),
+      on: jest.fn(),
+      emit: jest.fn()
+    }
+
     jest.spyOn(Services, 'getInstance').mockReturnValue(mockServicesInstance);
+    jest.spyOn(TaskManager, 'getTaskManager').mockReturnValue(mockTaskManager);
     // Instantiate ContactCenter to ensure it's fully initialized
     webex.cc = new ContactCenter({parent: webex});
   });

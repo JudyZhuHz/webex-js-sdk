@@ -285,6 +285,7 @@ export default function routingContact(aqm: AqmReqs) {
     end: aqm.req((p: {interactionId: string}) => ({
       url: `${TASK_API}${p.interactionId}${END}`,
       data: {},
+      host: WCC_API_GATEWAY,
       err,
       notifSuccess: {
         bind: {
@@ -308,6 +309,7 @@ export default function routingContact(aqm: AqmReqs) {
     wrapup: aqm.req((p: {interactionId: string; data: Contact.WrapupPayLoad}) => ({
       url: `${TASK_API}${p.interactionId}${WRAPUP}`,
       data: p.data,
+      host: WCC_API_GATEWAY,
       err,
       notifSuccess: {
         bind: {
@@ -331,6 +333,7 @@ export default function routingContact(aqm: AqmReqs) {
     cancelTask: aqm.req((p: {interactionId: string}) => ({
       url: `${TASK_API}${p.interactionId}${END}`,
       data: {},
+      host: WCC_API_GATEWAY,
       err,
       notifSuccess: {
         bind: {
@@ -354,6 +357,7 @@ export default function routingContact(aqm: AqmReqs) {
     cancelCtq: aqm.req((p: {interactionId: string; data: Contact.cancelCtq}) => ({
       url: `${TASK_API}${p.interactionId}/cancelCtq`,
       data: p.data,
+      host: WCC_API_GATEWAY,
       err,
       notifSuccess: {
         bind: {
