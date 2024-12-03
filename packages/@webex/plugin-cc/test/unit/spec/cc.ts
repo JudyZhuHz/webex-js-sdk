@@ -33,8 +33,8 @@ jest.mock('../../../src/logger-proxy', () => ({
 }));
 
 jest.mock('../../../src/services/config');
-jest.mock('../../../src/services/core/WebSocket/WebSocketManager');
-jest.mock('../../../src/services/core/WebSocket/connection-service');
+jest.mock('../../../src/services/core/websocket/WebSocketManager');
+jest.mock('../../../src/services/core/websocket/connection-service');
 jest.mock('../../../src/services/WebCallingService');
 
 global.URL.createObjectURL = jest.fn(() => 'blob:http://localhost:3000/12345');
