@@ -307,6 +307,10 @@ export interface ITask {
    */
   data: TaskData;
   /**
+   * Used to update the task the data received on each event
+   */
+  updateTaskData(newData: TaskData): ITask;
+  /**
    * Answers/accepts the incoming task
    *
    * @param taskId - Unique Task Identifier

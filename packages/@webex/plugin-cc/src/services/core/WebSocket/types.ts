@@ -1,5 +1,5 @@
 import {SubscribeRequest} from '../../../types';
-import {WebSocketManager} from './WebsocketManager';
+import {WebSocketManager} from './WebSocketManager';
 
 export type ConnectionServiceOptions = {
   webSocketManager: WebSocketManager;

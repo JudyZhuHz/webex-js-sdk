@@ -20,6 +20,7 @@ export const CC_EVENTS = {
   AGENT_BUDDY_AGENTS_SUCCESS: 'BuddyAgents',
   AGENT_BUDDY_AGENTS_RETRIEVE_FAILED: 'BuddyAgentsRetrieveFailed',
   AGENT_CONTACT_RESERVED: 'AgentContactReserved',
+  AGENT_OFFER_CONTACT: 'AgentOfferContact',
   AGENT_CONTACT_ASSIGNED: 'AgentContactAssigned',
   AGENT_CONTACT_ASSIGN_FAILED: 'AgentContactAssignFailed',
   AGENT_CONTACT_HELD: 'AgentContactHeld',

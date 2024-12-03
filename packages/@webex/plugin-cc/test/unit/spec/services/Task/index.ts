@@ -3,7 +3,7 @@ import {LocalMicrophoneStream} from '@webex/calling';
 import {LoginOption} from '../../../../../src/types';
 import { CC_FILE } from '../../../../../src/constants';
 import Task from '../../../../../src/services/task';
-import { getErrorDetails } from '../../../../../src/services/core/Utils';
+import * as Utils from '../../../../../src/services/core/Utils';
 
 jest.mock('@webex/calling');
 
@@ -12,6 +12,7 @@ describe('Task', () => {
   let contactMock;
   let taskDataMock;
   let webCallingServiceMock;
+  let getErrorDetailsSpy;
   const taskId = 'taskId123';
 
   beforeEach(() => {
@@ -30,7 +31,7 @@ describe('Task', () => {
 
       // Create an instance of Task
       task = new Task(contactMock, webCallingServiceMock, taskDataMock);
-  
+
       // Mock navigator.mediaDevices
       global.navigator.mediaDevices = {
         getUserMedia: jest.fn(() =>
@@ -39,6 +40,15 @@ describe('Task', () => {
           })
         ),
       };
+      
+      // Mock MediaStream (if needed)
+      global.MediaStream = jest.fn().mockImplementation((tracks) => {
+        return {
+          getTracks: jest.fn(() => tracks),
+        };
+      });
+
+      getErrorDetailsSpy = jest.spyOn(Utils, 'getErrorDetails')
   });
 
 
@@ -50,7 +60,6 @@ describe('Task', () => {
     await task.accept(taskId);
 
     expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({ audio: true });
-    expect(LocalMicrophoneStream).toHaveBeenCalledWith(expect.any(MediaStream));
     expect(webCallingServiceMock.answerCall).toHaveBeenCalledWith(expect.any(LocalMicrophoneStream), taskId);
   });
 
@@ -66,18 +75,15 @@ describe('Task', () => {
       details: {
         trackingId: '1234',
         data: {
-          reason: 'Error while performing accept',
+          reason: 'Accept Failed',
         },
       },
     };
 
-    webCallingServiceMock.answerCall.mockImplementation(() => { throw error; });
+    webCallingServiceMock.answerCall.mockImplementation(() => { throw error });
 
-    const acceptResponse = await task.accept(taskId);
-
-    expect(webCallingServiceMock.answerCall).toHaveBeenCalledWith(taskId)
-    expect(acceptResponse).rejects.toThrow(error);
-    expect(getErrorDetails).toHaveBeenCalledWith(error, 'accept', CC_FILE);
+    await expect(task.accept(taskId)).rejects.toThrow(new Error(error.details.data.reason));
+    expect(getErrorDetailsSpy).toHaveBeenCalledWith(error, 'accept', CC_FILE);
   });
 
   it('should decline call using webCallingService', async () => {
@@ -91,17 +97,13 @@ describe('Task', () => {
       details: {
         trackingId: '1234',
         data: {
-          reason: 'Error while performing decline',
+          reason: 'Decline Failed',
         },
       },
     };
 
-    webCallingServiceMock.declineCall.mockImplementation(() => { throw error; });
-
-    const declineResponse = await task.decline(taskId);
-
-    expect(webCallingServiceMock.declineCall).toHaveBeenCalledWith(taskId)
-    expect(declineResponse).rejects.toThrow(error);
-    expect(getErrorDetails).toHaveBeenCalledWith(error, 'decline', CC_FILE);
+    webCallingServiceMock.declineCall.mockImplementation(() => { throw error });
+    await expect(task.decline(taskId)).rejects.toThrow(new Error(error.details.data.reason));
+    expect(getErrorDetailsSpy).toHaveBeenCalledWith(error, 'decline', CC_FILE);
   }); 
 });

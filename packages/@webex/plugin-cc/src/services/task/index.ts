@@ -22,6 +22,12 @@ export default class Task implements ITask {
     this.webCallingService = webCallingService;
   }
 
+  public updateTaskData = (newData: TaskData) => {
+    this.data = newData;
+
+    return this;
+  };
+
   /**
    * This is used for incoming task accept by agent.
    *
@@ -64,6 +70,7 @@ export default class Task implements ITask {
    *
    * @returns Promise<TaskResponse>
    * @throws Error
+   * @example
    * ```typescript
    * task.decline(taskId).then(()=>{}).catch(()=>{})
    * ```

@@ -354,7 +354,7 @@ export default class ContactCenter extends WebexPlugin implements IContactCenter
   private async handleDeviceType(deviceType: LoginOption, dn: string): Promise<void> {
     switch (deviceType) {
       case LoginOption.BROWSER:
-        await this.webCallingService.registerWebCallingLine();
+        await this.webCallingService.registerWebCallingLine(deviceType);
         break;
       case LoginOption.AGENT_DN:
       case LoginOption.EXTENSION:

@@ -221,7 +221,7 @@ describe('WebCallingService', () => {
 
   describe('declineCall', () => {
     it('should end the call and log info when call exists', () => {
-      webRTCCalling.declinecall('task-id');
+      webRTCCalling.declineCall('task-id');
 
       expect(webex.logger.info).toHaveBeenCalledWith('[WebRtc]: Call end requested: task-id');
       expect(mockCall.end).toHaveBeenCalled();
@@ -231,13 +231,13 @@ describe('WebCallingService', () => {
       const error = new Error('Failed to end call');
       mockCall.end.mockImplementation(() => { throw error; });
 
-      expect(() => webRTCCalling.declinecall('task-id')).toThrow(error);
+      expect(() => webRTCCalling.declineCall('task-id')).toThrow(error);
       expect(webex.logger.error).toHaveBeenCalledWith(`[WebRtc]: Failed to end call: task-id. Error: ${error}`);
     });
 
     it('should log when there is no call to end', () => {
       webRTCCalling.call = null;
-      webRTCCalling.declinecall('task-id');
+      webRTCCalling.declineCall('task-id');
 
       expect(webex.logger.log).toHaveBeenCalledWith('[WebRtc]: Cannot end a non WebRtc Call: task-id');
     });

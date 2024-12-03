@@ -48,7 +48,7 @@ export default class TaskManager extends EventEmitter {
   private registerTaskListeners() {
     this.webSocketManager.on('message', (event) => {
       const payload = JSON.parse(event);
-      if (!event.keepalive) {
+      if (payload.data) {
         switch (payload.data.type) {
           case CC_EVENTS.AGENT_CONTACT_RESERVED:
             this.task = new Task(this.contact, this.webCallingService, payload.data);
@@ -61,7 +61,8 @@ export default class TaskManager extends EventEmitter {
             }
             break;
           case CC_EVENTS.AGENT_CONTACT_ASSIGNED:
-            this.emit(TASK_EVENTS.TASK_ASSIGNED, payload.data);
+            this.task = this.task.updateTaskData(payload.data);
+            this.emit(TASK_EVENTS.TASK_ASSIGNED, this.task);
             break;
           default:
             break;
@@ -80,7 +81,7 @@ export default class TaskManager extends EventEmitter {
   /**
    *
    */
-  public getActiveTasks = (): Record<TaskId, ITask> => {
+  public getAllTasks = (): Record<TaskId, ITask> => {
     return this.taskCollection;
   };
 
