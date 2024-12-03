@@ -183,8 +183,6 @@ function register() {
     })
 
     webex.cc.eventEmitter.on('task:incoming', (task) => {
-      console.log('pkesari_event received on sample app');
-      task = task;
       taskEvents.detail.task = task;
       
       incomingCallListener.dispatchEvent(taskEvents);
@@ -278,11 +276,11 @@ async function fetchBuddyAgents() {
 }
 
 incomingCallListener.addEventListener('task:incoming', (event) => {
-  console.log('pkesari_received incoming task and enable answer button: ', event);
   taskId = event.detail.task.data.interactionId;
+  task = event.detail.task;
   const callerDisplay = event.detail.task.data.interaction.callAssociatedDetails.ani;
   
-  if (event.details.task.webCallingService.loginOption === 'BROWSER') {
+  if (event.detail.task.webCallingService.loginOption === 'BROWSER') {
     answerElm.disabled = false;
     declineElm.disabled = false;
 
