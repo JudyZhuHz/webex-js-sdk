@@ -3052,6 +3052,11 @@ function moveFromDevice() {
   });
 }
 
+function isUserSelf(member) {
+  const meeting = getCurrentMeeting();
+  return meeting.selfId === member.id
+}
+
 function claimPersonalMeetingRoom() {
   console.log('DevicesControls#claimPersonalMeetingRoom()');
 
@@ -3094,7 +3099,7 @@ participantTable.addEventListener('click', (event) => {
     }
     const muteButton = document.getElementById('mute-participant-btn')
     if (selectedParticipant.isAudioMuted) {
-      muteButton.innerText = meeting.selfId === selectedParticipant.id ? 'Unmute' : 'Request to unmute';
+      muteButton.innerText = isUserSelf(selectedParticipant) ? 'Unmute' : 'Request to unmute';
     } else {
       muteButton.innerText = 'Mute';
     }
@@ -3334,15 +3339,17 @@ async function toggleBrb() {
   const meeting = getCurrentMeeting();
 
   if (meeting) {
-    const enabled = document.getElementById('brb').checked;
+    const brbButton = document.getElementById('brb-btn');
+    const isBrbEnabled = brbButton.innerText === 'Step away';
+
     try {
-      const result = await meeting.beRightBack(enabled);
-      console.log(`meeting.beRightBack(${enabled}): success. Result: ${result}`);
+      const result = await meeting.beRightBack(isBrbEnabled);
+      console.log(`meeting.beRightBack(${isBrbEnabled}): success. Result: ${result}`);
     } catch (error) {
-      console.error(`meeting.beRightBack({${enabled}): error: `, error);
+      console.error(`meeting.beRightBack({${isBrbEnabled}): error: `, error);
     } finally {
-      localMedia?.microphoneStream?.setUserMuted(enabled);
-      localMedia?.cameraStream?.setUserMuted(enabled);
+      localMedia?.microphoneStream?.setUserMuted(isBrbEnabled);
+      localMedia?.cameraStream?.setUserMuted(isBrbEnabled);
     }
   }
 }
@@ -3729,18 +3736,21 @@ function createMembersTable(members) {
     const th3 = document.createElement('th');
     const th4 = document.createElement('th');
     const th5 = document.createElement('th');
+    const th6 = document.createElement('th');
 
     th1.innerText = 'NAME';
     th2.innerText = 'VIDEO';
     th3.innerText = 'AUDIO';
     th4.innerText = 'STATUS';
     th5.innerText = 'SUPPORTS BREAKOUTS';
+    th6.innerText = 'AWAY';
 
     tr.appendChild(th1);
     tr.appendChild(th2);
     tr.appendChild(th3);
     tr.appendChild(th4);
     tr.appendChild(th5);
+    tr.appendChild(th6);
 
     return tr;
   }
@@ -3752,6 +3762,7 @@ function createMembersTable(members) {
     const td3 = document.createElement('td');
     const td4 = document.createElement('td');
     const td5 = document.createElement('td');
+    const td6 = document.createElement('td');
     const label1 = createLabel(member.id);
     const label2 = createLabel(member.id, member.isVideoMuted ? 'NO' : 'YES');
     const label3 = createLabel(member.id, member.isAudioMuted ? 'NO' : 'YES');
@@ -3780,11 +3791,19 @@ function createMembersTable(members) {
 
     td5.appendChild(label5);
 
+
+    if (isUserSelf(member) && member.isInMeeting) {
+      td6.appendChild(createButton(member.isBrb ? 'Back to meeting' : 'Step away', toggleBrb, {id: 'brb-btn'}));
+    } else {
+      td6.appendChild(createLabel(member.id, member.isBrb ? 'YES' : 'NO'));
+    }
+
     tr.appendChild(td1);
     tr.appendChild(td2);
     tr.appendChild(td3);
     tr.appendChild(td4);
     tr.appendChild(td5);
+    tr.appendChild(td6);
 
     return tr;
   }
@@ -3795,7 +3814,7 @@ function createMembersTable(members) {
 
   thead.appendChild(createHeadRow());
 
-  Object.entries(members).forEach(([key, value]) => {
+  Object.entries(members).forEach(([_, value]) => {
     if (value.status !== 'NOT_IN_MEETING') {
       const row = createRow(value);
 
