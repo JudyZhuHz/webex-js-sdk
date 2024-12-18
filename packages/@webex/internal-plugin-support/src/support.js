@@ -107,6 +107,10 @@ const Support = WebexPlugin.extend({
         return this.webex.upload(options);
       })
       .then((body) => {
+        if (this.config.incrementalLogs) {
+          this.webex.logger.clearBuffers();
+        }
+
         if (userId && !body.userId) {
           body.userId = userId;
         }
@@ -131,6 +135,7 @@ const Support = WebexPlugin.extend({
       'surveySessionId',
       'productAreaTag',
       'issueTypeTag',
+      'issueDescTag',
       'locussessionid',
       'autoupload',
     ]

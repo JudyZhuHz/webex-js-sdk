@@ -33,6 +33,7 @@ describe('plugin-meetings', () => {
         canStartManualCaption: null,
         canStopManualCaption: null,
         isManualCaptionActive: null,
+        isPremiseRecordingEnabled: null,
         isSaveTranscriptsEnabled: null,
         isWebexAssistantActive: null,
         canViewCaptionPanel: null,
@@ -60,6 +61,10 @@ describe('plugin-meetings', () => {
         canUpdateShareControl: null,
         canEnableViewTheParticipantsList: null,
         canDisableViewTheParticipantsList: null,
+        canEnableViewTheParticipantsListPanelist: null,
+        canDisableViewTheParticipantsListPanelist: null,
+        canEnableShowAttendeeCount: null,
+        canDisableShowAttendeeCount: null,
         canEnableRaiseHand: null,
         canDisableRaiseHand: null,
         canEnableVideo: null,
@@ -79,6 +84,16 @@ describe('plugin-meetings', () => {
         canShareWhiteBoard: null,
         enforceVirtualBackground: null,
         canPollingAndQA: null,
+        canStartWebcast: null,
+        canStopWebcast: null,
+        canShowStageView: null,
+        canEnableStageView: null,
+        canDisableStageView: null,
+        isPracticeSessionOn : null,
+        isPracticeSessionOff : null,
+        canStartPracticeSession: null,
+        canStopPracticeSession: null,
+
         ...expected,
       };
 
@@ -117,6 +132,7 @@ describe('plugin-meetings', () => {
       'canStartManualCaption',
       'canStopManualCaption',
       'isManualCaptionActive',
+      'isPremiseRecordingEnabled',
       'isSaveTranscriptsEnabled',
       'isWebexAssistantActive',
       'canViewCaptionPanel',
@@ -144,6 +160,10 @@ describe('plugin-meetings', () => {
       'canUpdateShareControl',
       'canEnableViewTheParticipantsList',
       'canDisableViewTheParticipantsList',
+      'canEnableViewTheParticipantsListPanelist',
+      'canDisableViewTheParticipantsListPanelist',
+      'canEnableShowAttendeeCount',
+      'canDisableShowAttendeeCount',
       'canEnableRaiseHand',
       'canDisableRaiseHand',
       'canEnableVideo',
@@ -163,7 +183,17 @@ describe('plugin-meetings', () => {
       'canShareWhiteBoard',
       'enforceVirtualBackground',
       'canPollingAndQA',
-    ].forEach((key) => {
+      'canStartWebcast',
+      'canStopWebcast',
+      'canShowStageView',
+      'canEnableStageView',
+      'canDisableStageView',
+      'isPracticeSessionOn',
+      'isPracticeSessionOff',
+      'canStartPracticeSession',
+      'canStopPracticeSession',
+
+  ].forEach((key) => {
       it(`get and set for ${key} work as expected`, () => {
         const inMeetingActions = new InMeetingActions();
 

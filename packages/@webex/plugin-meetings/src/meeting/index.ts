@@ -5,6 +5,7 @@ import jwtDecode from 'jwt-decode';
 import {StatelessWebexPlugin} from '@webex/webex-core';
 // @ts-ignore - Types not available for @webex/common
 import {Defer} from '@webex/common';
+import {safeSetTimeout, safeSetInterval} from '@webex/common-timers';
 import {
   ClientEvent,
   ClientEventLeaveReason,
@@ -702,6 +703,8 @@ export default class Meeting extends StatelessWebexPlugin {
   private iceCandidateErrors: Map<string, number>;
   private iceCandidatesCount: number;
   private rtcMetrics?: RtcMetrics;
+  private uploadLogsTimer?: ReturnType<typeof setTimeout>;
+  private logUploadIntervalIndex: number;
 
   /**
    * @param {Object} attrs
@@ -770,6 +773,8 @@ export default class Meeting extends StatelessWebexPlugin {
       );
       this.callStateForMetrics.correlationId = this.id;
     }
+    this.logUploadIntervalIndex = 0;
+
     /**
      * @instance
      * @type {String}
@@ -2014,6 +2019,7 @@ export default class Meeting extends StatelessWebexPlugin {
     this.setUpLocusInfoSelfListener();
     this.setUpLocusInfoMeetingListener();
     this.setUpLocusServicesListener();
+    this.setUpLocusResourcesListener();
     // members update listeners
     this.setUpLocusFullStateListener();
     this.setUpLocusUrlListener();
@@ -2635,6 +2641,43 @@ export default class Meeting extends StatelessWebexPlugin {
       );
     });
 
+    this.locusInfo.on(LOCUSINFO.EVENTS.CONTROLS_WEBCAST_CHANGED, ({state}) => {
+      Trigger.trigger(
+        this,
+        {file: 'meeting/index', function: 'setupLocusControlsListener'},
+        EVENT_TRIGGERS.MEETING_CONTROLS_WEBCAST_UPDATED,
+        {state}
+      );
+    });
+
+    this.locusInfo.on(LOCUSINFO.EVENTS.CONTROLS_MEETING_FULL_CHANGED, ({state}) => {
+      Trigger.trigger(
+        this,
+        {file: 'meeting/index', function: 'setupLocusControlsListener'},
+        EVENT_TRIGGERS.MEETING_CONTROLS_MEETING_FULL_UPDATED,
+        {state}
+      );
+    });
+
+    this.locusInfo.on(LOCUSINFO.EVENTS.CONTROLS_PRACTICE_SESSION_STATUS_UPDATED, ({state}) => {
+      this.webinar.updatePracticeSessionStatus(state);
+      Trigger.trigger(
+        this,
+        {file: 'meeting/index', function: 'setupLocusControlsListener'},
+        EVENT_TRIGGERS.MEETING_CONTROLS_PRACTICE_SESSION_STATUS_UPDATED,
+        {state}
+      );
+    });
+
+    this.locusInfo.on(LOCUSINFO.EVENTS.CONTROLS_STAGE_VIEW_UPDATED, ({state}) => {
+      Trigger.trigger(
+        this,
+        {file: 'meeting/index', function: 'setupLocusControlsListener'},
+        EVENT_TRIGGERS.MEETING_CONTROLS_STAGE_VIEW_UPDATED,
+        {state}
+      );
+    });
+
     this.locusInfo.on(LOCUSINFO.EVENTS.CONTROLS_VIDEO_CHANGED, ({state}) => {
       Trigger.trigger(
         this,
@@ -2996,10 +3039,20 @@ export default class Meeting extends StatelessWebexPlugin {
       this.breakouts.breakoutServiceUrlUpdate(payload?.services?.breakout?.url);
       this.annotation.approvalUrlUpdate(payload?.services?.approval?.url);
       this.simultaneousInterpretation.approvalUrlUpdate(payload?.services?.approval?.url);
-      this.webinar.webcastUrlUpdate(payload?.services?.webcast?.url);
-      this.webinar.webinarAttendeesSearchingUrlUpdate(
-        payload?.services?.webinarAttendeesSearching?.url
-      );
+    });
+  }
+
+  /**
+   * Set up the locus info resources link listener
+   * update the locusInfo for webcast instance url
+   * @param {Object} payload - The event payload
+   * @returns {undefined}
+   * @private
+   * @memberof Meeting
+   */
+  private setUpLocusResourcesListener() {
+    this.locusInfo.on(LOCUSINFO.EVENTS.LINKS_RESOURCES, (payload) => {
+      this.webinar.updateWebcastUrl(payload);
     });
   }
 
@@ -3104,7 +3157,7 @@ export default class Meeting extends StatelessWebexPlugin {
   private setUpLocusInfoSelfListener() {
     this.locusInfo.on(LOCUSINFO.EVENTS.LOCAL_UNMUTE_REQUIRED, (payload) => {
       if (this.audio) {
-        this.audio.handleServerLocalUnmuteRequired(this);
+        this.audio.handleServerLocalUnmuteRequired(this, payload.unmuteAllowed);
         Trigger.trigger(
           this,
           {
@@ -3202,6 +3255,9 @@ export default class Meeting extends StatelessWebexPlugin {
           options: {meetingId: this.id},
         });
       }
+      Metrics.sendBehavioralMetric(BEHAVIORAL_METRICS.GUEST_ENTERED_LOBBY, {
+        correlation_id: this.correlationId,
+      });
       this.updateLLMConnection();
     });
     this.locusInfo.on(LOCUSINFO.EVENTS.SELF_ADMITTED_GUEST, async (payload) => {
@@ -3224,6 +3280,9 @@ export default class Meeting extends StatelessWebexPlugin {
         this.webex.internal.newMetrics.submitClientEvent({
           name: 'client.lobby.exited',
           options: {meetingId: this.id},
+        });
+        Metrics.sendBehavioralMetric(BEHAVIORAL_METRICS.GUEST_EXITED_LOBBY, {
+          correlation_id: this.correlationId,
         });
       }
       this.rtcMetrics?.sendNextMetrics();
@@ -3325,7 +3384,7 @@ export default class Meeting extends StatelessWebexPlugin {
       this.simultaneousInterpretation.updateCanManageInterpreters(
         payload.newRoles?.includes(SELF_ROLES.MODERATOR)
       );
-      this.webinar.updateCanManageWebcast(payload.newRoles?.includes(SELF_ROLES.MODERATOR));
+      this.webinar.updateRoleChanged(payload);
       Trigger.trigger(
         this,
         {
@@ -3472,6 +3531,7 @@ export default class Meeting extends StatelessWebexPlugin {
       emailAddress: string;
       email: string;
       phoneNumber: string;
+      roles: Array<string>;
     },
     alertIfActive = true
   ) {
@@ -3772,6 +3832,10 @@ export default class Meeting extends StatelessWebexPlugin {
             this.userDisplayHints,
             this.selfUserPolicies
           ),
+          isPremiseRecordingEnabled: RecordingUtil.isPremiseRecordingEnabled(
+            this.userDisplayHints,
+            this.selfUserPolicies
+          ),
           canRaiseHand: MeetingUtil.canUserRaiseHand(this.userDisplayHints),
           canLowerAllHands: MeetingUtil.canUserLowerAllHands(this.userDisplayHints),
           canLowerSomeoneElsesHand: MeetingUtil.canUserLowerSomeoneElsesHand(this.userDisplayHints),
@@ -3863,6 +3927,22 @@ export default class Meeting extends StatelessWebexPlugin {
             requiredHints: [DISPLAY_HINTS.DISABLE_VIEW_THE_PARTICIPANT_LIST],
             displayHints: this.userDisplayHints,
           }),
+          canEnableViewTheParticipantsListPanelist: ControlsOptionsUtil.hasHints({
+            requiredHints: [DISPLAY_HINTS.ENABLE_VIEW_THE_PARTICIPANT_LIST_PANELIST],
+            displayHints: this.userDisplayHints,
+          }),
+          canDisableViewTheParticipantsListPanelist: ControlsOptionsUtil.hasHints({
+            requiredHints: [DISPLAY_HINTS.DISABLE_VIEW_THE_PARTICIPANT_LIST_PANELIST],
+            displayHints: this.userDisplayHints,
+          }),
+          canEnableShowAttendeeCount: ControlsOptionsUtil.hasHints({
+            requiredHints: [DISPLAY_HINTS.ENABLE_SHOW_ATTENDEE_COUNT],
+            displayHints: this.userDisplayHints,
+          }),
+          canDisableShowAttendeeCount: ControlsOptionsUtil.hasHints({
+            requiredHints: [DISPLAY_HINTS.DISABLE_SHOW_ATTENDEE_COUNT],
+            displayHints: this.userDisplayHints,
+          }),
           canEnableRaiseHand: ControlsOptionsUtil.hasHints({
             requiredHints: [DISPLAY_HINTS.ENABLE_RAISE_HAND],
             displayHints: this.userDisplayHints,
@@ -3877,6 +3957,42 @@ export default class Meeting extends StatelessWebexPlugin {
           }),
           canDisableVideo: ControlsOptionsUtil.hasHints({
             requiredHints: [DISPLAY_HINTS.DISABLE_VIDEO],
+            displayHints: this.userDisplayHints,
+          }),
+          canStartWebcast: ControlsOptionsUtil.hasHints({
+            requiredHints: [DISPLAY_HINTS.WEBCAST_CONTROL_START],
+            displayHints: this.userDisplayHints,
+          }),
+          canStopWebcast: ControlsOptionsUtil.hasHints({
+            requiredHints: [DISPLAY_HINTS.WEBCAST_CONTROL_STOP],
+            displayHints: this.userDisplayHints,
+          }),
+          canShowStageView: ControlsOptionsUtil.hasHints({
+            requiredHints: [DISPLAY_HINTS.STAGE_VIEW_ACTIVE],
+            displayHints: this.userDisplayHints,
+          }),
+          canEnableStageView: ControlsOptionsUtil.hasHints({
+            requiredHints: [DISPLAY_HINTS.ENABLE_STAGE_VIEW],
+            displayHints: this.userDisplayHints,
+          }),
+          canDisableStageView: ControlsOptionsUtil.hasHints({
+            requiredHints: [DISPLAY_HINTS.DISABLE_STAGE_VIEW],
+            displayHints: this.userDisplayHints,
+          }),
+          isPracticeSessionOn: ControlsOptionsUtil.hasHints({
+            requiredHints: [DISPLAY_HINTS.PRACTICE_SESSION_ON],
+            displayHints: this.userDisplayHints,
+          }),
+          isPracticeSessionOff: ControlsOptionsUtil.hasHints({
+            requiredHints: [DISPLAY_HINTS.PRACTICE_SESSION_OFF],
+            displayHints: this.userDisplayHints,
+          }),
+          canStartPracticeSession: ControlsOptionsUtil.hasHints({
+            requiredHints: [DISPLAY_HINTS.SHOW_PRACTICE_SESSION_START],
+            displayHints: this.userDisplayHints,
+          }),
+          canStopPracticeSession: ControlsOptionsUtil.hasHints({
+            requiredHints: [DISPLAY_HINTS.SHOW_PRACTICE_SESSION_STOP],
             displayHints: this.userDisplayHints,
           }),
           canShareFile:
@@ -4033,6 +4149,65 @@ export default class Meeting extends StatelessWebexPlugin {
    */
   public uploadLogs(options: object = {file: 'meeting/index', function: 'uploadLogs'}) {
     Trigger.trigger(this, options, EVENTS.REQUEST_UPLOAD_LOGS, this);
+  }
+
+  /**
+   * sets the timer for periodic log upload
+   * @returns {void}
+   */
+  private setLogUploadTimer() {
+    // start with short timeouts and increase them later on so in case users have very long multi-hour meetings we don't get too fragmented logs
+    const LOG_UPLOAD_INTERVALS = [0.1, 1, 15, 15, 30, 30, 30, 60];
+
+    const delay =
+      1000 *
+      // @ts-ignore - config coming from registerPlugin
+      this.config.logUploadIntervalMultiplicationFactor *
+      LOG_UPLOAD_INTERVALS[this.logUploadIntervalIndex];
+
+    if (this.logUploadIntervalIndex < LOG_UPLOAD_INTERVALS.length - 1) {
+      this.logUploadIntervalIndex += 1;
+    }
+
+    this.uploadLogsTimer = safeSetTimeout(() => {
+      this.uploadLogsTimer = undefined;
+
+      this.uploadLogs();
+
+      // just as an extra precaution, to avoid uploading logs forever in case something goes wrong
+      // and the page remains opened, we stop it if there is no media connection
+      if (!this.mediaProperties.webrtcMediaConnection) {
+        return;
+      }
+
+      this.setLogUploadTimer();
+    }, delay);
+  }
+
+  /**
+   * Starts a periodic upload of logs
+   *
+   * @returns {undefined}
+   */
+  public startPeriodicLogUpload() {
+    // @ts-ignore - config coming from registerPlugin
+    if (this.config.logUploadIntervalMultiplicationFactor && !this.uploadLogsTimer) {
+      this.logUploadIntervalIndex = 0;
+
+      this.setLogUploadTimer();
+    }
+  }
+
+  /**
+   * Stops the periodic upload of logs
+   *
+   * @returns {undefined}
+   */
+  public stopPeriodicLogUpload() {
+    if (this.uploadLogsTimer) {
+      clearTimeout(this.uploadLogsTimer);
+      this.uploadLogsTimer = undefined;
+    }
   }
 
   /**
@@ -4746,8 +4921,6 @@ export default class Meeting extends StatelessWebexPlugin {
       if (!joinResponse) {
         // This is the 1st attempt or a retry after join request failed -> we need to do a join with TURN discovery
 
-        // @ts-ignore
-        joinOptions.reachability = await this.webex.meetings.reachability.getReachabilityResults();
         const turnDiscoveryRequest = await this.roap.generateTurnDiscoveryRequestMessage(
           this,
           true
@@ -4878,6 +5051,8 @@ export default class Meeting extends StatelessWebexPlugin {
         new ParameterError('Cannot reconnect, Media has not established to reconnect')
       );
     }
+
+    this.cleanUpBeforeReconnection();
 
     return this.reconnectionManager
       .reconnect(options, async () => {
@@ -6296,7 +6471,7 @@ export default class Meeting extends StatelessWebexPlugin {
     this.mediaProperties.webrtcMediaConnection.on(
       MediaConnectionEventNames.ICE_CANDIDATE,
       (event) => {
-        if (event.candidate) {
+        if (event.candidate && event.candidate.candidate && event.candidate.candidate.length > 0) {
           this.iceCandidatesCount += 1;
         }
       }
@@ -7007,6 +7182,23 @@ export default class Meeting extends StatelessWebexPlugin {
     }
   }
 
+  private async cleanUpBeforeReconnection(): Promise<void> {
+    try {
+      // when media fails, we want to upload a webrtc dump to see whats going on
+      // this function is async, but returns once the stats have been gathered
+      await this.forceSendStatsReport({callFrom: 'cleanUpBeforeReconnection'});
+
+      if (this.statsAnalyzer) {
+        await this.statsAnalyzer.stopAnalyzer();
+      }
+    } catch (error) {
+      LoggerProxy.logger.error(
+        'Meeting:index#cleanUpBeforeReconnection --> Error during cleanup: ',
+        error
+      );
+    }
+  }
+
   /**
    * Creates an instance of LocusMediaRequest for this meeting - it is needed for doing any calls
    * to Locus /media API (these are used for sending Roap messages and updating audio/video mute status).
@@ -7098,7 +7290,7 @@ export default class Meeting extends StatelessWebexPlugin {
       shareAudioEnabled = true,
       shareVideoEnabled = true,
       remoteMediaManagerConfig,
-      bundlePolicy,
+      bundlePolicy = 'max-bundle',
     } = options;
 
     this.allowMediaInLobby = options?.allowMediaInLobby;
@@ -7203,6 +7395,7 @@ export default class Meeting extends StatelessWebexPlugin {
 
       // We can log ReceiveSlot SSRCs only after the SDP exchange, so doing it here:
       this.remoteMediaManager?.logAllReceiveSlots();
+      this.startPeriodicLogUpload();
     } catch (error) {
       LoggerProxy.logger.error(`${LOG_HEADER} failed to establish media connection: `, error);
 
@@ -7985,18 +8178,21 @@ export default class Meeting extends StatelessWebexPlugin {
    * @param {boolean} mutedEnabled
    * @param {boolean} disallowUnmuteEnabled
    * @param {boolean} muteOnEntryEnabled
+   * @param {array} roles
    * @public
    * @memberof Meeting
    */
   public setMuteAll(
     mutedEnabled: boolean,
     disallowUnmuteEnabled: boolean,
-    muteOnEntryEnabled: boolean
+    muteOnEntryEnabled: boolean,
+    roles: Array<string>
   ) {
     return this.controlsOptionsManager.setMuteAll(
       mutedEnabled,
       disallowUnmuteEnabled,
-      muteOnEntryEnabled
+      muteOnEntryEnabled,
+      roles
     );
   }
 

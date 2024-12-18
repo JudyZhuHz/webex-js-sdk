@@ -3,6 +3,7 @@
  */
 
 import {MEETINGS} from '../constants';
+import ControlsOptionsUtil from '../controls-options-manager/util';
 
 /**
  * IInMeetingActions
@@ -25,6 +26,7 @@ interface IInMeetingActions {
   canStartRecording?: boolean;
   canPauseRecording?: boolean;
   canResumeRecording?: boolean;
+  isPremiseRecordingEnabled?: boolean;
   canStopRecording?: boolean;
   canRaiseHand?: boolean;
   canLowerAllHands?: boolean;
@@ -64,6 +66,10 @@ interface IInMeetingActions {
   canUpdateShareControl?: boolean;
   canEnableViewTheParticipantsList?: boolean;
   canDisableViewTheParticipantsList?: boolean;
+  canEnableViewTheParticipantsListPanelist?: boolean;
+  canDisableViewTheParticipantsListPanelist?: boolean;
+  canEnableShowAttendeeCount?: boolean;
+  canDisableShowAttendeeCount?: boolean;
   canEnableRaiseHand?: boolean;
   canDisableRaiseHand?: boolean;
   canEnableVideo?: boolean;
@@ -83,6 +89,15 @@ interface IInMeetingActions {
   canShareWhiteBoard?: boolean;
   enforceVirtualBackground?: boolean;
   canPollingAndQA?: boolean;
+  canStartWebcast?: boolean;
+  canStopWebcast?: boolean;
+  canShowStageView?: boolean;
+  canEnableStageView?: boolean;
+  canDisableStageView?: boolean;
+  isPracticeSessionOn?: boolean;
+  isPracticeSessionOff?: boolean;
+  canStartPracticeSession?: boolean;
+  canStopPracticeSession?: boolean;
 }
 
 /**
@@ -106,6 +121,8 @@ export default class InMeetingActions implements IInMeetingActions {
   canPauseRecording = null;
 
   canResumeRecording = null;
+
+  isPremiseRecordingEnabled = null;
 
   canStopRecording = null;
 
@@ -201,6 +218,14 @@ export default class InMeetingActions implements IInMeetingActions {
 
   canDisableViewTheParticipantsList = null;
 
+  canEnableViewTheParticipantsListPanelist = null;
+
+  canDisableViewTheParticipantsListPanelist = null;
+
+  canEnableShowAttendeeCount = null;
+
+  canDisableShowAttendeeCount = null;
+
   canEnableRaiseHand = null;
 
   canDisableRaiseHand = null;
@@ -238,6 +263,25 @@ export default class InMeetingActions implements IInMeetingActions {
   canShareWhiteBoard = null;
 
   canPollingAndQA = null;
+
+  canStartWebcast = null;
+
+  canStopWebcast = null;
+
+  canShowStageView = null;
+
+  canEnableStageView = null;
+
+  canDisableStageView = null;
+
+  isPracticeSessionOn = null;
+
+  isPracticeSessionOff = null;
+
+  canStartPracticeSession = null;
+
+  canStopPracticeSession = null;
+
   /**
    * Returns all meeting action options
    * @returns {Object}
@@ -260,6 +304,7 @@ export default class InMeetingActions implements IInMeetingActions {
     canPauseRecording: this.canPauseRecording,
     canResumeRecording: this.canResumeRecording,
     canStopRecording: this.canStopRecording,
+    isPremiseRecordingEnabled: this.isPremiseRecordingEnabled,
     canRaiseHand: this.canRaiseHand,
     canLowerAllHands: this.canLowerAllHands,
     canLowerSomeoneElsesHand: this.canLowerSomeoneElsesHand,
@@ -298,6 +343,10 @@ export default class InMeetingActions implements IInMeetingActions {
     canUpdateShareControl: this.canUpdateShareControl,
     canEnableViewTheParticipantsList: this.canEnableViewTheParticipantsList,
     canDisableViewTheParticipantsList: this.canDisableViewTheParticipantsList,
+    canEnableViewTheParticipantsListPanelist: this.canEnableViewTheParticipantsListPanelist,
+    canDisableViewTheParticipantsListPanelist: this.canDisableViewTheParticipantsListPanelist,
+    canEnableShowAttendeeCount: this.canEnableShowAttendeeCount,
+    canDisableShowAttendeeCount: this.canDisableShowAttendeeCount,
     canEnableRaiseHand: this.canEnableRaiseHand,
     canDisableRaiseHand: this.canDisableRaiseHand,
     canEnableVideo: this.canEnableVideo,
@@ -317,6 +366,15 @@ export default class InMeetingActions implements IInMeetingActions {
     supportHDV: this.supportHDV,
     canShareWhiteBoard: this.canShareWhiteBoard,
     canPollingAndQA: this.canPollingAndQA,
+    canStartWebcast: this.canStartWebcast,
+    canStopWebcast: this.canStopWebcast,
+    canShowStageView: this.canShowStageView,
+    canEnableStageView: this.canEnableStageView,
+    canDisableStageView: this.canDisableStageView,
+    isPracticeSessionOn: this.isPracticeSessionOn,
+    isPracticeSessionOff: this.isPracticeSessionOff,
+    canStartPracticeSession: this.canStartPracticeSession,
+    canStopPracticeSession: this.canStopPracticeSession,
   });
 
   /**
