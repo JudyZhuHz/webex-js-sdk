@@ -842,7 +842,7 @@ describe('plugin-meetings', () => {
         assertBrbUnchanged(false);
       });
 
-      it('should not trigger SELF_MEETING_BRB_CHANGED when brb state changed to undefined', () => {
+      it('should not trigger SELF_MEETING_BRB_CHANGED when brb state is undefined', () => {
         const selfWithBrbChanged = cloneDeep(self);
         selfWithBrbChanged.controls.brb = false;
         locusInfo.self = selfWithBrbChanged;
