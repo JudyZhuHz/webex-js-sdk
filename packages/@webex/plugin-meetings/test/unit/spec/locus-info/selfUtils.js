@@ -178,7 +178,7 @@ describe('plugin-meetings', () => {
       });
     });
 
-    describe.only('brbChanged', () => {
+    describe('brbChanged', () => {
       it('should return true if brb have changed', () => {
         const current = {
           brb: {enabled: true}
