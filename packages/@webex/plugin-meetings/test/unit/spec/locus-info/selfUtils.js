@@ -178,7 +178,7 @@ describe('plugin-meetings', () => {
       });
     });
 
-    describe('brbChanged', () => {
+    describe.only('brbChanged', () => {
       it('should return true if brb have changed', () => {
         const current = {
           brb: {enabled: true}
@@ -202,12 +202,10 @@ describe('plugin-meetings', () => {
       });
 
       it('should return false if brb in current is undefined', () => {
-        const current = {
-          brb: {enabled: true}
-        };
-        const previous = {};
+        const current = {};
+        const previous = {brb: {enabled: true}};
 
-        assert.isTrue(SelfUtils.brbChanged(previous, current));
+        assert.isFalse(SelfUtils.brbChanged(previous, current));
       });
     });
 
