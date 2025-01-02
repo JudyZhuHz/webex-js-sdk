@@ -3607,7 +3607,7 @@ export default class Meeting extends StatelessWebexPlugin {
 
     // this logic should be applied only to multistream meetings
     return this.meetingRequest
-      .sendBrb({
+      .setBrb({
         enabled,
         locusUrl: this.locusUrl,
         deviceUrl: this.deviceUrl,

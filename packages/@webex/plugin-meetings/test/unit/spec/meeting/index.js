@@ -32,8 +32,8 @@ import {
   NETWORK_STATUS,
   ONLINE,
   OFFLINE,
-  ROAP_OFFER_ANSWER_EXCHANGE_TIMEOUT, HTTP_VERBS, PARTICIPANT, CONTROLS,
-} from "@webex/plugin-meetings/src/constants";
+  ROAP_OFFER_ANSWER_EXCHANGE_TIMEOUT,
+} from '@webex/plugin-meetings/src/constants';
 import {
   ConnectionState,
   MediaConnectionEventNames,
@@ -3710,7 +3710,7 @@ describe('plugin-meetings', () => {
         };
 
         beforeEach(() => {
-          meeting.meetingRequest.sendBrb = sinon.stub().resolves({body: 'test'});
+          meeting.meetingRequest.setBrb = sinon.stub().resolves({body: 'test'});
           meeting.mediaProperties.webrtcMediaConnection = {createSendSlot: sinon.stub()};
           meeting.sendSlotManager.createSlot(
             fakeMultistreamRoapMediaConnection,
@@ -3741,7 +3741,7 @@ describe('plugin-meetings', () => {
 
             await brbResult;
             assert.exists(brbResult.then);
-            assert.calledOnce(meeting.meetingRequest.sendBrb);
+            assert.calledOnce(meeting.meetingRequest.setBrb);
           })
 
           it('should disable #beRightBack and return a promise', async () => {
@@ -3749,7 +3749,20 @@ describe('plugin-meetings', () => {
 
             await brbResult;
             assert.exists(brbResult.then);
-            assert.calledOnce(meeting.meetingRequest.sendBrb);
+            assert.calledOnce(meeting.meetingRequest.setBrb);
+          })
+
+          it('should throw an error and reject the promise if setBrb fails', async () => {
+            const error = new Error('setBrb failed');
+            meeting.meetingRequest.setBrb.rejects(error);
+
+            try {
+              await meeting.beRightBack(true);
+            } catch (err) {
+              assert.instanceOf(err, Error);
+              assert.equal(err.message, 'setBrb failed');
+              assert.isRejected((Promise.reject()));
+            }
           })
         });
 
@@ -3763,14 +3776,14 @@ describe('plugin-meetings', () => {
             meeting.beRightBack(true);
 
             assert.isRejected((Promise.reject()));
-            assert.notCalled(meeting.meetingRequest.sendBrb);
+            assert.notCalled(meeting.meetingRequest.setBrb);
           })
 
           it('should ignore disabling #beRightBack', async () => {
             meeting.beRightBack(false);
 
             assert.isRejected((Promise.reject()));
-            assert.notCalled(meeting.meetingRequest.sendBrb);
+            assert.notCalled(meeting.meetingRequest.setBrb);
           })
         });
       });
@@ -4869,7 +4882,6 @@ describe('plugin-meetings', () => {
               assert.calledTwice(locusMediaRequestStub);
             });
           });
-
 
           [
             {mute: true, title: 'user muting a track before confluence is created'},

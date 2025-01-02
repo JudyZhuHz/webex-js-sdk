@@ -920,7 +920,7 @@ export default class MeetingRequest extends StatelessWebexPlugin {
    * @param {string} options.selfId - The ID of the participant.
    * @returns {Promise}
    */
-  sendBrb({enabled, locusUrl, deviceUrl, selfId}: BrbOptions) {
+  setBrb({enabled, locusUrl, deviceUrl, selfId}: BrbOptions) {
     const uri = `${locusUrl}/${PARTICIPANT}/${selfId}/${CONTROLS}`;
 
     return this.locusDeltaRequest({

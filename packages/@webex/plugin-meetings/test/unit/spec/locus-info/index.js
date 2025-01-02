@@ -1457,6 +1457,30 @@ describe('plugin-meetings', () => {
           }
         );
       });
+
+      it('should not trigger any events if controls is undefined', () => {
+        locusInfo.self = self;
+        locusInfo.emitScoped = sinon.stub();
+        const newSelf = cloneDeep(self);
+        newSelf.controls = undefined;
+
+        locusInfo.updateSelf(newSelf, []);
+
+        const eventsSet = new Set([
+          LOCUSINFO.EVENTS.CONTROLS_MEETING_LAYOUT_UPDATED,
+          LOCUSINFO.EVENTS.SELF_MEETING_BREAKOUTS_CHANGED,
+          LOCUSINFO.EVENTS.SELF_MEETING_BRB_CHANGED,
+          LOCUSINFO.EVENTS.SELF_MEETING_INTERPRETATION_CHANGED,
+          LOCUSINFO.EVENTS.LOCAL_UNMUTE_REQUIRED,
+          LOCUSINFO.EVENTS.SELF_REMOTE_MUTE_STATUS_UPDATED,
+        ]);
+
+        // check all events that contain logic on controls existence
+        locusInfo.emitScoped.getCalls().forEach((call) => {
+          const eventName = call.args[1];
+          assert.isFalse(eventsSet.has(eventName));
+        });
+      });
     });
 
     describe('#updateMeetingInfo', () => {
