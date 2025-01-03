@@ -3052,7 +3052,7 @@ function moveFromDevice() {
   });
 }
 
-function isUserSelf(member) {
+function isMemberSelf(member) {
   const meeting = getCurrentMeeting();
   return meeting.selfId === member.id
 }
@@ -3099,7 +3099,7 @@ participantTable.addEventListener('click', (event) => {
     }
     const muteButton = document.getElementById('mute-participant-btn')
     if (selectedParticipant.isAudioMuted) {
-      muteButton.innerText = isUserSelf(selectedParticipant) ? 'Unmute' : 'Request to unmute';
+      muteButton.innerText = isMemberSelf(selectedParticipant) ? 'Unmute' : 'Request to unmute';
     } else {
       muteButton.innerText = 'Mute';
     }
@@ -3340,16 +3340,16 @@ async function toggleBrb() {
 
   if (meeting) {
     const brbButton = document.getElementById('brb-btn');
-    const isBrbEnabled = brbButton.innerText === 'Step away';
+    const enableBrb = brbButton.innerText === 'Step away';
 
     try {
-      const result = await meeting.beRightBack(isBrbEnabled);
-      console.log(`meeting.beRightBack(${isBrbEnabled}): success. Result: ${result}`);
+      const result = await meeting.beRightBack(enableBrb);
+      console.log(`meeting.beRightBack(${enableBrb}): success. Result: ${result}`);
     } catch (error) {
-      console.error(`meeting.beRightBack({${isBrbEnabled}): error: `, error);
+      console.error(`meeting.beRightBack({${enableBrb}): error: `, error);
     } finally {
-      localMedia?.microphoneStream?.setUserMuted(isBrbEnabled);
-      localMedia?.cameraStream?.setUserMuted(isBrbEnabled);
+      localMedia?.microphoneStream?.setUserMuted(enableBrb);
+      localMedia?.cameraStream?.setUserMuted(enableBrb);
     }
   }
 }
@@ -3792,7 +3792,7 @@ function createMembersTable(members) {
     td5.appendChild(label5);
 
 
-    if (isUserSelf(member) && member.isInMeeting) {
+    if (isMemberSelf(member) && member.isInMeeting) {
       td6.appendChild(createButton(member.isBrb ? 'Back to meeting' : 'Step away', toggleBrb, {id: 'brb-btn'}));
     } else {
       td6.appendChild(createLabel(member.id, member.isBrb ? 'YES' : 'NO'));
