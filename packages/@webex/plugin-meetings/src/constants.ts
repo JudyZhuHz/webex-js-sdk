@@ -199,6 +199,7 @@ export const RETRY_TIMEOUT = 3000;
 export const ICE_AND_DTLS_CONNECTION_TIMEOUT = 20000;
 export const ROAP_OFFER_ANSWER_EXCHANGE_TIMEOUT = 35000;
 export const WEBINAR_ERROR_WEBCAST = [403026];
+export const WEBINAR_ERROR_REGISTRATIONID = [403037, 403137];
 
 // ******************** REGEX **********************
 // Please alphabetize
@@ -1319,6 +1320,7 @@ export const MEETING_INFO_FAILURE_REASON = {
   POLICY: 'POLICY', // meeting info request violates some meeting policy
   WEBINAR_REGISTRATION: 'WEBINAR_REGISTRATION', // webinar need registration
   NEED_JOIN_WITH_WEBCAST: 'NEED_JOIN_WITH_WEBCAST', // webinar need using webcast join
+  WEBINAR_NEED_REGISTRATIONID: 'WEBINAR_NEED_REGISTRATIONID', // webinar need registrationID
   OTHER: 'OTHER', // any other error (network, etc)
 };
 

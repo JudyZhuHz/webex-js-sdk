@@ -6375,6 +6375,29 @@ describe('plugin-meetings', () => {
             MEETING_INFO_FAILURE_REASON.NEED_JOIN_WITH_WEBCAST
           );
         });
+
+        it('handles MeetingInfoV2JoinWebinarError webinar need registrationId', async () => {
+          meeting.destination = FAKE_DESTINATION;
+          meeting.destinationType = FAKE_TYPE;
+          meeting.attrs.meetingInfoProvider = {
+            fetchMeetingInfo: sinon
+              .stub()
+              .throws(
+                new MeetingInfoV2JoinWebinarError(403037, FAKE_MEETING_INFO, 'a message')
+              ),
+          };
+
+          await assert.isRejected(
+            meeting.fetchMeetingInfo({sendCAevents: true}),
+            JoinWebinarError
+          );
+
+          assert.deepEqual(meeting.meetingInfo, FAKE_MEETING_INFO);
+          assert.equal(
+            meeting.meetingInfoFailureReason,
+            MEETING_INFO_FAILURE_REASON.WEBINAR_NEED_REGISTRATIONID
+          );
+        });
       });
 
       describe('#refreshPermissionToken', () => {

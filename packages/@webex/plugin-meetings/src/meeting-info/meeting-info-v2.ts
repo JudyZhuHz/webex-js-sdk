@@ -25,8 +25,11 @@ const POLICY_ERROR_CODES = [403049, 403104, 403103, 403048, 403102, 403101];
  * 403137 - Registration ID verified failure
  * 423007 - Registration ID input too many time,please input captcha code
  * 403026 - Need to join meeting via webcast
+ * 403037 - Meeting join required registration ID
+ * 403137 - Registration ID verified failure
+ *
  */
-const JOIN_WEBINAR_ERROR_CODES = [403021, 403022, 403024, 403137, 423007, 403026];
+const JOIN_WEBINAR_ERROR_CODES = [403021, 403022, 403024, 403137, 423007, 403026, 403037, 403137];
 
 /**
  * Error to indicate that wbxappapi requires a password

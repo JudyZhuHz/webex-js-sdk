@@ -123,6 +123,7 @@ import {
   ROAP_OFFER_ANSWER_EXCHANGE_TIMEOUT,
   NAMED_MEDIA_GROUP_TYPE_AUDIO,
   WEBINAR_ERROR_WEBCAST,
+  WEBINAR_ERROR_REGISTRATIONID,
 } from '../constants';
 import BEHAVIORAL_METRICS from '../metrics/constants';
 import ParameterError from '../common/errors/parameter';
@@ -1772,6 +1773,8 @@ export default class Meeting extends StatelessWebexPlugin {
         this.meetingInfoFailureReason = MEETING_INFO_FAILURE_REASON.WEBINAR_REGISTRATION;
         if (WEBINAR_ERROR_WEBCAST.includes(err.wbxAppApiCode)) {
           this.meetingInfoFailureReason = MEETING_INFO_FAILURE_REASON.NEED_JOIN_WITH_WEBCAST;
+        } else if (WEBINAR_ERROR_REGISTRATIONID.includes(err.wbxAppApiCode)) {
+          this.meetingInfoFailureReason = MEETING_INFO_FAILURE_REASON.WEBINAR_NEED_REGISTRATIONID;
         }
         this.meetingInfoFailureCode = err.wbxAppApiCode;
 

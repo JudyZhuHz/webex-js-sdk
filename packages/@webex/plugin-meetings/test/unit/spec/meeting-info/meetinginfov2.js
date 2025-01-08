@@ -898,6 +898,8 @@ describe('plugin-meetings', () => {
           {errorCode: 403137},
           {errorCode: 423007},
           {errorCode: 403026},
+          {errorCode: 403037},
+          {errorCode: 403137},
         ],
         ({errorCode}) => {
           it(`should throw a MeetingInfoV2JoinWebinarError for error code ${errorCode}`, async () => {
