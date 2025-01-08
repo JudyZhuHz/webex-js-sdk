@@ -198,6 +198,7 @@ export const RETRY_TIMEOUT = 3000;
 
 export const ICE_AND_DTLS_CONNECTION_TIMEOUT = 20000;
 export const ROAP_OFFER_ANSWER_EXCHANGE_TIMEOUT = 35000;
+export const WEBINAR_ERROR_WEBCAST = [403026];
 
 // ******************** REGEX **********************
 // Please alphabetize
@@ -536,9 +537,9 @@ export const ERROR_DICTIONARY = {
       'Reconnection was not started, because there is one already in progress or reconnections are disabled in config.',
     CODE: 15,
   },
-  WebinarRegistrationError: {
-    NAME: 'WebinarRegistrationError',
-    MESSAGE: 'An error occurred while the webinar required registration.',
+  JoinWebinarError: {
+    NAME: 'JoinWebinarError',
+    MESSAGE: 'An error occurred while the join webinar.',
     CODE: 16,
   },
 };
@@ -1317,6 +1318,7 @@ export const MEETING_INFO_FAILURE_REASON = {
   WRONG_CAPTCHA: 'WRONG_CAPTCHA', // wbxappapi requires a captcha code or a wrong captcha code was provided
   POLICY: 'POLICY', // meeting info request violates some meeting policy
   WEBINAR_REGISTRATION: 'WEBINAR_REGISTRATION', // webinar need registration
+  NEED_JOIN_WITH_WEBCAST: 'NEED_JOIN_WITH_WEBCAST', // webinar need using webcast join
   OTHER: 'OTHER', // any other error (network, etc)
 };
 
