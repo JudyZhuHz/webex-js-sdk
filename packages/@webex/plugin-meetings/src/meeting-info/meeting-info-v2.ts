@@ -313,6 +313,7 @@ export default class MeetingInfoV2 {
    * @param {String} destination one of many different types of destinations to look up info for
    * @param {DESTINATION_TYPE} [type] to match up with the destination value
    * @param {String} password
+   * @param {String} registrationId
    * @param {Object} captchaInfo
    * @param {String} captchaInfo.code
    * @param {String} captchaInfo.id
@@ -328,6 +329,7 @@ export default class MeetingInfoV2 {
     destination: string,
     type: DESTINATION_TYPE = null,
     password: string = null,
+    registrationId: string = null,
     captchaInfo: {
       code: string;
       id: string;
@@ -360,6 +362,7 @@ export default class MeetingInfoV2 {
       installedOrgID,
       locusId,
       extraParams,
+      registrationId,
     });
 
     // If the body only contains the default properties, we don't have enough to
