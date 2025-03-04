@@ -1990,7 +1990,7 @@ export default class Meeting extends StatelessWebexPlugin {
         };
       })
       .catch((error) => {
-        if (error instanceof MeetingInfoV2JoinWebinarError || error instanceof CaptchaError) {
+        if (error instanceof JoinWebinarError || error instanceof CaptchaError) {
           return {
             isRegistrationIdValid: this.registrationIdStatus === REGISTRATIONID_STATUS.VERIFIED,
             requiredCaptcha: this.requiredCaptcha,
