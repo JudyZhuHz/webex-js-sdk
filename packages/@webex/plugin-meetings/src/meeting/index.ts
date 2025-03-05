@@ -2002,7 +2002,10 @@ export default class Meeting extends StatelessWebexPlugin {
           return {
             isRegistrationIdValid: this.registrationIdStatus === REGISTRATIONID_STATUS.VERIFIED,
             requiredCaptcha: this.requiredCaptcha,
-            failureReason: this.meetingInfoFailureReason,
+            failureReason:
+              error instanceof JoinWebinarError
+                ? MEETING_INFO_FAILURE_REASON.WRONG_REGISTRATIONID
+                : this.meetingInfoFailureReason,
           };
         }
         throw error;
