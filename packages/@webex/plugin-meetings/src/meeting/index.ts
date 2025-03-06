@@ -1794,6 +1794,7 @@ export default class Meeting extends StatelessWebexPlugin {
         if (err.meetingInfo) {
           this.meetingInfo = err.meetingInfo;
         }
+        this.requiredCaptcha = null;
 
         throw new JoinWebinarError();
       } else if (err instanceof MeetingInfoV2PasswordError) {
