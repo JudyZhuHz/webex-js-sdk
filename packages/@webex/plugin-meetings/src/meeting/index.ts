@@ -123,6 +123,7 @@ import {
   NAMED_MEDIA_GROUP_TYPE_AUDIO,
   WEBINAR_ERROR_WEBCAST,
   WEBINAR_ERROR_REGISTRATIONID,
+  JOIN_BEFORE_HOST,
   REGISTRATIONID_STATUS,
 } from '../constants';
 import BEHAVIORAL_METRICS from '../metrics/constants';
@@ -132,6 +133,7 @@ import {
   MeetingInfoV2CaptchaError,
   MeetingInfoV2PolicyError,
   MeetingInfoV2JoinWebinarError,
+  MeetingInfoV2JoinForbiddenError,
 } from '../meeting-info/meeting-info-v2';
 import {CSI, ReceiveSlotManager} from '../multistream/receiveSlotManager';
 import SendSlotManager from '../multistream/sendSlotManager';
@@ -163,6 +165,7 @@ import {ConnectionStateHandler, ConnectionStateEvent} from './connectionStateHan
 import JoinWebinarError from '../common/errors/join-webinar-error';
 import Member from '../member';
 import MultistreamNotSupportedError from '../common/errors/multistream-not-supported-error';
+import JoinForbiddenError from '../common/errors/join-forbidden-error';
 
 // default callback so we don't call an undefined function, but in practice it should never be used
 const DEFAULT_ICE_PHASE_CALLBACK = () => 'JOIN_MEETING_FINAL';
@@ -600,7 +603,6 @@ export default class Meeting extends StatelessWebexPlugin {
   networkQualityMonitor: NetworkQualityMonitor;
   networkStatus?: NETWORK_STATUS;
   passwordStatus: string;
-  registrationIdStatus: string;
   queuedMediaUpdates: any[];
   recording: any;
   remoteMediaManager: RemoteMediaManager | null;
@@ -1345,8 +1347,6 @@ export default class Meeting extends StatelessWebexPlugin {
      */
     this.passwordStatus = PASSWORD_STATUS.UNKNOWN;
 
-    this.registrationIdStatus = REGISTRATIONID_STATUS.UNKNOWN;
-
     /**
      * Information about required captcha. If null, then no captcha is required. status. If it's PASSWORD_STATUS.REQUIRED then verifyPassword() needs to be called
      * with the correct password before calling join()
@@ -1797,6 +1797,20 @@ export default class Meeting extends StatelessWebexPlugin {
         this.requiredCaptcha = null;
 
         throw new JoinWebinarError();
+      } else if (err instanceof MeetingInfoV2JoinForbiddenError) {
+        this.meetingInfoFailureReason = MEETING_INFO_FAILURE_REASON.JOIN_FORBIDDEN;
+        this.meetingInfoFailureCode = err.wbxAppApiCode;
+
+        if (err.meetingInfo) {
+          this.meetingInfo = err.meetingInfo;
+        }
+
+        // Handle the case where user hasn't reached Join Before Host (JBH) time (error code 403003)
+        if (JOIN_BEFORE_HOST === err.wbxAppApiCode) {
+          this.meetingInfoFailureReason = MEETING_INFO_FAILURE_REASON.NOT_REACH_JBH;
+        }
+
+        throw new JoinForbiddenError(this.meetingInfoFailureReason, err);
       } else if (err instanceof MeetingInfoV2PasswordError) {
         LoggerProxy.logger.info(
           // @ts-ignore
@@ -4698,6 +4712,7 @@ export default class Meeting extends StatelessWebexPlugin {
 
       this.receiveSlotManager.reset();
       this.mediaProperties.webrtcMediaConnection.close();
+      this.mediaProperties.unsetPeerConnection();
       this.sendSlotManager.reset();
       this.setNetworkStatus(undefined);
     }
@@ -8625,6 +8640,12 @@ export default class Meeting extends StatelessWebexPlugin {
       correlationId: this.correlationId,
       muted,
       encoderImplementation: this.statsAnalyzer?.shareVideoEncoderImplementation,
+      // TypeScript 4 does not recognize the `displaySurface` property. Instead of upgrading the
+      // SDK to TypeScript 5, which may affect other packages, use bracket notation for now, since
+      // all we're doing here is adding metrics.
+      // eslint-disable-next-line dot-notation
+      displaySurface: this.mediaProperties?.shareVideoStream?.getSettings()['displaySurface'],
+      isMultistream: this.isMultistream,
     });
   };
 
