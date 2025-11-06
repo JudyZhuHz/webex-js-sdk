@@ -7,6 +7,8 @@ import '@webex/internal-plugin-mercury';
 import {get, merge} from 'lodash';
 import {Timer} from '@webex/common-timers';
 
+import {transforms as encryptionTransforms} from '@webex/internal-plugin-conversation/src/encryption-transforms';
+import {transforms as decryptionTransforms} from '@webex/internal-plugin-conversation/src/decryption-transforms';
 import {
   AiAssistantRequestOptions,
   RequestOptions,
@@ -203,6 +205,25 @@ const AIAssistant = WebexPlugin.extend({
     const eventName = this._getResultEventName(requestId);
     const streamEventName = this._getStreamEventName(requestId);
 
+    if (this.config.ishybridMode) {
+      return new Promise((resolve, reject) => {
+        this.webex
+          .request({
+            service: AI_ASSISTANT_SERVICE_NAME,
+            resource,
+            method: 'POST',
+            contentType: 'application/json',
+            body: {clientRequestId: requestId, ...params},
+          })
+          .then(({body}) => {
+            resolve({...body, requestId, streamEventName});
+          })
+          .catch((error) => {
+            reject(error);
+          });
+      });
+    }
+
     // eslint-disable-next-line no-async-promise-executor
     return new Promise((resolve, reject) => {
       const timer = new Timer(() => {
@@ -228,7 +249,6 @@ const AIAssistant = WebexPlugin.extend({
         }
 
         let decryptErrorMessage;
-
         try {
           if (!errorCode) {
             await this._decryptContent(resultData);
@@ -288,17 +308,19 @@ const AIAssistant = WebexPlugin.extend({
     let value = options.contentValue;
 
     if (options.contentType === 'message') {
-      value = await this._encryptData({
-        text: options.contentValue,
-        encryptionKeyUrl: options.encryptionKeyUrl,
-      });
+      if (!this.config.ishybridMode) {
+        value = await this._encryptData({
+          text: options.contentValue,
+          encryptionKeyUrl: options.encryptionKeyUrl,
+        });
+      }
     }
 
     const content: any = {
       context: {
         resources: options.contextResources,
       },
-      encryptionKeyUrl: options.encryptionKeyUrl,
+      encryptionKeyUrl: '',
       type: options.contentType,
       value,
     };
